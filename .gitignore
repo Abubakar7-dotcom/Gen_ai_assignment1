@@ -44,3 +44,4 @@ report/*.synctex.gz
 
 # transfer artifact
 .claude_sync*
+*_smoke.json
