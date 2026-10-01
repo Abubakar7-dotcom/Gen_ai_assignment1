@@ -1,0 +1,21 @@
+# One command: `docker compose up --build`  ->  http://localhost:8080
+# Models: run scripts/download_models (sh or ps1) first; they land in ./models_onnx, mounted read-only.
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    volumes:
+      - ./models_onnx:/models:ro
+    environment:
+      - MODELS_DIR=/models
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped

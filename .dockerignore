@@ -1,0 +1,11 @@
+data
+checkpoints
+models_onnx
+wandb
+frontend/node_modules
+frontend/dist
+report
+results
+optuna_studies/*.db
+.git
+**/__pycache__
