@@ -37,13 +37,15 @@ src/
     pix2pix.py        # UNet generator + PatchGAN discriminator with style embedding (T4)
   losses.py           # L1+SSIM, MoE loss, balance loss, GAN losses
   metrics.py          # PSNR, SSIM, classification metrics
-train/                # train_t1.py, train_t2_cls.py, train_t2_spec.py, train_t3.py, train_t4.py
-optuna_studies/       # tune_t1.py, tune_t2_cls.py, tune_t2_spec.py, tune_t3.py, tune_t4.py
-eval/                 # eval_t1.py ... eval_t4.py, figures.py
-export/               # export_onnx.py, check_parity.py
+  engine/             # ae.py (T1 + T2 specialists), cls.py, moe.py, gan.py — run(cfg, trial=None) -> best score
+  loaders.py          # load best checkpoints; HardRouter (T2 inference)
+train/train.py        # CLI: python -m train.train --task t1|t2_cls|t2_spec|t3|t4 [--specialist X] [--smoke]
+optuna_studies/tune.py# CLI: python -m optuna_studies.tune --task ... (writes configs/<task>_best.yaml)
+eval/evaluate.py      # CLI: python -m eval.evaluate --task t1|t2|t3|t4  -> results/<task>/
+export/export_onnx.py # export all models + parity -> models_onnx/, results/onnx_parity.csv
 backend/              # FastAPI app, Dockerfile
 frontend/             # React + Vite + Tailwind, Dockerfile (nginx)
-scripts/              # download_data.sh, download_models.sh
+scripts/              # prepare_data.py, make_samples.py, download_models.{sh,ps1}, gpu_chain_*.ps1
 results/              # metrics CSVs, figures (committed — small PNG/CSV only)
 docs/                 # decisions.md, ai_use.md, stitch/ (design screenshots)
 report/               # IEEE LaTeX (IEEEtran)
@@ -162,25 +164,32 @@ Test severities (each test image × each corruption × 3 levels, plus clean):
 ## Progress checklist (update as work completes)
 
 **Day 1**
-- [ ] Repo scaffold, requirements, .gitignore, tracker set up
-- [ ] Stitch design + screenshots
-- [ ] Pets split + cache + corruptions + balanced sampler + manifests (+ visual sanity grid)
-- [ ] FS2K loader + pairing check + stratified split
+- [x] Repo scaffold, requirements, .gitignore
+- [ ] Stitch design + screenshots (student)
+- [x] Corruptions + balanced sampler + manifests code (tests pass)
+- [ ] Pets split/cache/manifests GENERATED (needs annotations + images) + sanity grid
+- [x] FS2K loader + pairing check code
+- [ ] FS2K cache + split GENERATED (needs dataset)
+- [x] All models, engines, Optuna, eval, ONNX export code (CPU smoke-tested)
 - [ ] T4 Optuna → full train (background)
 - [ ] T1 Optuna → full train
 - [ ] T2 classifier Optuna → train; specialists shared Optuna → train ×3
 - [ ] T3 warm-up + joint fine-tune + Optuna
-- [ ] FastAPI backend (all endpoints)
-- [ ] ONNX export + parity for all models
+- [x] FastAPI backend (all endpoints, tested with smoke ONNX models)
+- [ ] ONNX export + parity for TRAINED models
 - [ ] Eval scripts + all figures/tables in `results/`
 
 **Day 2**
-- [ ] React frontend, 4 workspaces
-- [ ] Dockerfiles + compose + model download script; fresh-clone test
+- [x] React frontend, 4 workspaces (tested against smoke backend)
+- [x] Dockerfiles + compose + model download scripts
+- [ ] Fresh-clone `docker compose up --build` test (not possible in dev sandbox: Docker Hub blocked)
 - [ ] README
 - [ ] IEEE report
 - [ ] Demo video + link
 - [ ] Final push + submit
 
 ## Open decisions / notes
-- _(append here as work progresses)_
+- Smoke check of everything on CPU: `pytest -q tests/` and `python -m train.train --task <t> --smoke`.
+- GPU order: start `scripts/gpu_chain_gan.ps1` first (longest), then `scripts/gpu_chain_restoration.ps1` in a 2nd terminal.
+- After training: `python -m export.export_onnx`, `python -m scripts.make_samples`, upload `models_onnx/*.onnx`
+  to a GitHub Release `models-v1`, set the URL in `scripts/download_models.*`.
