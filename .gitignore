@@ -45,3 +45,5 @@ report/*.synctex.gz
 # transfer artifact
 .claude_sync*
 *_smoke.json
+results/smoke_*/
+results/*_smoke.csv
