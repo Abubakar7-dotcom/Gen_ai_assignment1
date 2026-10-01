@@ -43,4 +43,4 @@ report/*.blg
 report/*.synctex.gz
 
 # transfer artifact
-.claude_sync.tar.gz
+.claude_sync*
