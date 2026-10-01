@@ -1,0 +1,15 @@
+# Task 1 - universal denoising autoencoder (values replaced by Optuna best params after tuning)
+run_name: t1-universal-dae
+out_dir: checkpoints/t1
+conditions: [clean, salt_pepper, blur, occlusion]
+base: 32          # encoder base channels
+latent_ch: 16     # bottleneck channels at 8x8 -> 1024-dim code
+dropout: 0.0
+skip: false
+alpha: 0.8        # L1 weight; (1-alpha) on 1-SSIM
+lr: 0.001
+weight_decay: 0.0001
+batch_size: 64    # must be divisible by 4 (balanced sampler)
+epochs: 40
+num_workers: 2
+sample_every: 5

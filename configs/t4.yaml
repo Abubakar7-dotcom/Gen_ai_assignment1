@@ -1,0 +1,14 @@
+# Task 4 - style-conditioned pix2pix on FS2K
+run_name: t4-style-cgan
+out_dir: checkpoints/t4
+g_base: 64
+d_base: 64
+style_dim: 16
+dropout: 0.5
+g_lr: 0.0002
+d_lr: 0.0002
+batch_size: 16
+lambda_l1: 100
+epochs: 150
+num_workers: 2
+sample_every: 5

@@ -1,0 +1,14 @@
+# Task 2 - specialist autoencoders (shared architecture from one Optuna search; trained once per corruption)
+run_name: t2-specialist
+out_dir: checkpoints/t2_spec   # suffixed with _<corruption> by the CLI
+base: 32
+latent_ch: 16
+dropout: 0.0
+skip: false
+alpha: 0.8
+lr: 0.001
+weight_decay: 0.0001
+batch_size: 64
+epochs: 30
+num_workers: 2
+sample_every: 5
