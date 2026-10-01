@@ -1,0 +1,24 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --color-accent-50: #eef2ff;
+  --color-accent-100: #e0e7ff;
+  --color-accent-500: #6366f1;
+  --color-accent-600: #4f46e5;
+  --color-accent-700: #4338ca;
+}
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+html, body, #root { height: 100%; }
+body { @apply bg-slate-50 text-slate-800 antialiased dark:bg-slate-950 dark:text-slate-100; }
+
+.card { @apply rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900; }
+.label { @apply text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400; }
+.chip { @apply rounded-lg border px-3 py-1.5 text-sm font-medium transition; }
+.chip-on { @apply border-accent-600 bg-accent-600 text-white; }
+.chip-off { @apply border-slate-200 bg-white text-slate-700 hover:border-accent-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200; }
+.btn { @apply inline-flex items-center justify-center gap-2 rounded-lg bg-accent-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-accent-700 disabled:cursor-not-allowed disabled:opacity-50; }
+.btn-ghost { @apply inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium hover:border-accent-500 dark:border-slate-700; }
+.pixel { image-rendering: auto; }

@@ -79,6 +79,7 @@ async def get_image(file: UploadFile | None, sample: str | None) -> tuple[np.nda
 
 
 def maybe_corrupt(img: np.ndarray, condition: str | None, severity: str | None, seed: int | None):
+    """Returns (model input, corruption info). info["clean"] holds the pre-corruption image (for error maps)."""
     if not condition or condition == "none":
         return img, None
     if condition not in CONDITIONS:
@@ -93,7 +94,7 @@ def maybe_corrupt(img: np.ndarray, condition: str | None, severity: str | None, 
     else:
         raise HTTPException(422, f"severity must be one of {SEVERITIES + ['random']}")
     return apply_corruption(img, condition, params), {"condition": condition, "severity": severity or "random",
-                                                      "params": params, "seed": seed}
+                                                      "params": params, "seed": seed, "clean": b64png(img)}
 
 
 def to_input(img: np.ndarray) -> np.ndarray:
