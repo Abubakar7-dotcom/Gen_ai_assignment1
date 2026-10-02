@@ -57,7 +57,7 @@ def run(cfg: dict, trial: optuna.Trial | None = None) -> float:
     seed_everything(cfg.get("seed", 42))
     device = get_device(cfg.get("device", "auto"))
     if device.type == "cuda":
-        torch.backends.cudnn.benchmark = True
+        torch.backends.cudnn.benchmark = cfg.get("cudnn_benchmark", False)
     smoke = cfg.get("smoke", False)
     max_b = 2 if smoke else None
     (tp, ts, tst), (vp, vs, vst) = fs2k_data(cfg)

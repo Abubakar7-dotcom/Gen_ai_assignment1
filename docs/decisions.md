@@ -14,3 +14,7 @@ Each entry: decision, alternatives considered, evidence / reason, effect. Feeds 
   Alternative: the official `images.tar.gz` (what `prepare_data --pets` downloads by default). Rejected on the GPU PC only for speed: the Oxford server gave 30–60 KB/s (4+ h for 790 MB) against >1 MB/s from the mirror.
   Evidence the mirror is the same data: 3,680 trainval + 3,669 test images, the same counts as the official `trainval.txt` / `test.txt`; the files are the original bytes, including the four official `.jpg` files that are really PNGs (`Egyptian_Mau_14/156/186`, `Abyssinian_5`). The script asserts the mirror's ids equal the official id lists.
   Effect: none on the split (seed 42 over the official `trainval.txt` order) or on the 128×128 cache.
+
+## Training setup
+
+- **`cudnn.benchmark` off by default (config key `cudnn_benchmark`).** Alternative: on (the original plan). Measured on the RTX 4050, Task 1, 3 epochs on real data: on = 2 min 06 s wall (first epoch 67 s, later epochs 8.0 s); off = 56 s wall (first epoch 17 s, later epochs 7.2–7.7 s). The auto-tuner re-runs for every new layer shape, i.e. for every Optuna trial (channel widths and batch size change) and again for the validation batch size, so it costs about 70 s per run and gives no steady-state gain for networks this small.

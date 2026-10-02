@@ -51,7 +51,7 @@ def run(cfg: dict, trial: optuna.Trial | None = None) -> float:
     seed_everything(cfg.get("seed", 42))
     device = get_device(cfg.get("device", "auto"))
     if device.type == "cuda":
-        torch.backends.cudnn.benchmark = True
+        torch.backends.cudnn.benchmark = cfg.get("cudnn_benchmark", False)
     conditions = cfg.get("conditions", CONDITIONS)
     smoke = cfg.get("smoke", False)
     max_b = 2 if smoke else None
