@@ -145,7 +145,7 @@ Test severities (each test image × each corruption × 3 levels, plus clean):
 - **GPU machine:** runs Optuna studies, full training, evaluation, ONNX export. GPU: **RTX 4050 (6 GB VRAM, likely laptop)**. OS: **Windows** (roommate's PC). Claude Code runs **locally on that PC** in a clone of this repo and follows `docs/gpu_runbook.md`; the student steers that session from the DEV PC. No SSH/Tailscale.
   - Use AMP (`torch.autocast` + `GradScaler`). `cudnn.benchmark` is OFF by default (`cudnn_benchmark` config key): measured on the 4050 it adds ~70 s per run and no steady-state speed-up.
   - Optuna batch-size caps: AEs/classifier ≤ 128, MoE ≤ 64, cGAN ≤ 32. Catch CUDA OOM inside objectives → `raise optuna.TrialPruned()`.
-  - Data loading is the likely bottleneck (laptop CPU): cache clean 128px images as a uint8 `.npy`, `num_workers=2–4`, `pin_memory=True`, `persistent_workers=True`.
+  - Data loading is the likely bottleneck (laptop CPU): cache clean 128px images as a uint8 `.npy`, `pin_memory=True`. **`num_workers: 0` on this Windows PC**: every DataLoader worker is a new process that re-imports CUDA torch (1–4 GB of commit memory each); with 2 workers per loader two chains exhausted the 42 GB commit limit (`WinError 1455`) and hung.
   - Max 2 concurrent training processes; check `nvidia-smi` memory before starting a second.
   - Laptop must be plugged in, sleep disabled, lid-close action = "Do nothing".
 - **Sync = git only.** Code flows DEV → GitHub → GPU machine (`git pull`). Never edit code directly on the GPU machine without committing it back.
@@ -154,7 +154,7 @@ Test severities (each test image × each corruption × 3 levels, plus clean):
 - **Commit identity on the GPU machine:** set repo-local `git config user.name/user.email` to the student's identity (individual assignment).
 - **Tracking: use Weights & Biases** (cloud) so runs on the GPU machine are visible from the DEV machine.
 - Long jobs on the GPU machine run as background tasks or in a persistent terminal; all scripts resumable from last checkpoint.
-- Windows GPU machine: every training script needs `if __name__ == "__main__":` guard (DataLoader workers use spawn); start with `num_workers=2`.
+- Windows GPU machine: every training script needs `if __name__ == "__main__":` guard (DataLoader workers use spawn); configs use `num_workers: 0` (see above).
 - Every script takes `--device auto` (cuda if available else cpu) and `--data-root`; no hardcoded paths.
 - Budget is tight: Optuna 10–15 trials, few epochs, subset of train during search, then full retrain of best config. State this trade-off in the report.
 - Run T4 (longest) on the GPU as early as possible.

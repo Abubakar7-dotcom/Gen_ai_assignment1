@@ -11,5 +11,5 @@ lr: 0.001
 weight_decay: 0.0001
 batch_size: 64    # must be divisible by 4 (balanced sampler)
 epochs: 40
-num_workers: 2
+num_workers: 0    # Windows: every worker re-imports CUDA torch (1-4 GB commit each), see docs/decisions.md
 sample_every: 5

@@ -67,7 +67,7 @@ def run(cfg: dict, trial: optuna.Trial | None = None) -> float:
     val_dl = make_loader(PairedSketchDataset(vp, vs, vst), batch_size=32, num_workers=nw, device=device)
     fixed_idx = list(range(min(6, len(vp))))
     fixed = next(iter(make_loader(torch.utils.data.Subset(PairedSketchDataset(vp, vs, vst), fixed_idx),
-                                  batch_size=len(fixed_idx))))
+                                  batch_size=len(fixed_idx), num_workers=0)))
 
     G = StyleUNetGenerator(base=cfg["g_base"], style_dim=cfg["style_dim"], dropout=cfg["dropout"]).to(device)
     D = StylePatchDiscriminator(base=cfg.get("d_base", 64), style_dim=cfg["style_dim"]).to(device)

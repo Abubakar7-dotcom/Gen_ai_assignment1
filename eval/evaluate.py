@@ -247,7 +247,7 @@ def eval_t4(device, out, smoke):
     G = G.eval().to(device)
     ds = PairedSketchDataset(p, s, st)
     rows, fakes = [], []
-    for x, y, sty in make_loader(ds, batch_size=32):
+    for x, y, sty in make_loader(ds, batch_size=32, num_workers=0):
         with torch.no_grad():
             f = G(x.to(device), sty.to(device)).float().cpu()
         f01, y01 = (f + 1) / 2, (y + 1) / 2

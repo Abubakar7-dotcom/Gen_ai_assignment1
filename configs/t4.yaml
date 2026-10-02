@@ -10,5 +10,5 @@ d_lr: 0.0002
 batch_size: 16
 lambda_l1: 100
 epochs: 150
-num_workers: 2
+num_workers: 0    # Windows: every worker re-imports CUDA torch (1-4 GB commit each), see docs/decisions.md
 sample_every: 5
