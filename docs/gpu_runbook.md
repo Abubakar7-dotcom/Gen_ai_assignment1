@@ -114,6 +114,9 @@ powershell -ExecutionPolicy Bypass -File scripts\gpu_chain_restoration.ps1
 ```
 
 - Each chain is tune → train → evaluate and is resumable: after a crash, run the same command again.
+- Unattended, one chain after the other (use this when someone else is also training on the GPU, or to
+  schedule a run): `powershell -ExecutionPolicy Bypass -File scripts\gpu_run_all.ps1`. It uses the venv
+  itself, waits for AC power, and logs to `checkpoints\logs\`.
 - Run them as background tasks and check on them; do not sit blocked on them.
 - Run time on this GPU is unknown. Time the first Optuna trial of each task and tell the student the
   projected total. If it will not fit the deadline, propose fewer trials/epochs and wait for the answer.
