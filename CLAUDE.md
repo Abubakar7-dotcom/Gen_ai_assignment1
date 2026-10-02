@@ -142,7 +142,7 @@ Test severities (each test image × each corruption × 3 levels, plus clean):
 
 ## Compute notes — two machines
 - **DEV machine (no GPU):** write code, CPU smoke tests (`--smoke`: 2 batches, 1 epoch), data pipeline, backend, frontend, Docker, report.
-- **GPU machine:** runs Optuna studies, full training, evaluation, ONNX export. GPU: **RTX 4050 (6 GB VRAM, likely laptop)**. OS: _<fill in>_.
+- **GPU machine:** runs Optuna studies, full training, evaluation, ONNX export. GPU: **RTX 4050 (6 GB VRAM, likely laptop)**. OS: **Windows** (roommate's PC, reached over Tailscale + SSH).
   - Use AMP (`torch.autocast` + `GradScaler`), `cudnn.benchmark=True`.
   - Optuna batch-size caps: AEs/classifier ≤ 128, MoE ≤ 64, cGAN ≤ 32. Catch CUDA OOM inside objectives → `raise optuna.TrialPruned()`.
   - Data loading is the likely bottleneck (laptop CPU): cache clean 128px images as a uint8 `.npy`, `num_workers=2–4`, `pin_memory=True`, `persistent_workers=True`.

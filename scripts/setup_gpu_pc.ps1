@@ -29,8 +29,9 @@ Say "Using PyTorch wheel index: $cu"
 # 2. Tools via winget
 Say "Installing Python 3.11, Git, Tailscale (skips if present)"
 foreach ($id in @("Python.Python.3.11","Git.Git","Tailscale.Tailscale")) {
-    $installed = winget list --id $id -e 2>$null | Select-String $id
-    if (-not $installed) { winget install --id $id -e --silent --accept-package-agreements --accept-source-agreements }
+    # --source winget: without it a broken msstore source makes winget refuse to install
+    $installed = winget list --id $id -e --source winget 2>$null | Select-String $id
+    if (-not $installed) { winget install --id $id -e --source winget --silent --accept-package-agreements --accept-source-agreements }
     else { Write-Host "$id already installed" }
 }
 RefreshPath
