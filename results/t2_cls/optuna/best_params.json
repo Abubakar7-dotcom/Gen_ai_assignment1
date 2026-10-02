@@ -1,0 +1,19 @@
+{
+  "task": "t2_cls",
+  "n_trials": 15,
+  "n_complete": 8,
+  "n_pruned": 7,
+  "trial_overrides": {
+    "epochs": 4,
+    "train_subset": 0.5
+  },
+  "best_value": 0.9769191336987104,
+  "best_trial": 14,
+  "best_params": {
+    "lr": 0.00100149940052458,
+    "batch_size": 32,
+    "channels": "medium",
+    "dropout": 0.24925237170134168,
+    "weight_decay": 0.00020522153265271873
+  }
+}
