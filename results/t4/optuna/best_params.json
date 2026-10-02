@@ -1,0 +1,20 @@
+{
+  "task": "t4",
+  "n_trials": 10,
+  "n_complete": 8,
+  "n_pruned": 2,
+  "trial_overrides": {
+    "epochs": 10
+  },
+  "best_value": 0.6874291300773621,
+  "best_trial": 8,
+  "best_params": {
+    "g_lr": 0.00032092988426622054,
+    "d_lr": 0.00039360563222625333,
+    "batch_size": 8,
+    "g_base": 64,
+    "dropout": 0.25,
+    "style_dim": 32,
+    "lambda_l1": 168.5597226442016
+  }
+}

@@ -132,7 +132,8 @@ def run(cfg: dict, trial: optuna.Trial | None = None) -> float:
                         best=best, run_id=tracker.id, g_cfg=G.cfg)
         if epoch % cfg.get("sample_every", 5) == 0 or epoch == epochs - 1:
             grid = sample_grid(G, fixed, device)
-            tracker.image("samples/photo|real|gen|style1|style2|style3", grid, step=epoch)
+            tracker.image("samples/grid", grid, step=epoch,
+                          caption="rows: photo | real | generated | as style 1 | as style 2 | as style 3")
             if not smoke:
                 import cv2
                 (odir / "samples").mkdir(exist_ok=True)

@@ -131,8 +131,9 @@ def run(cfg: dict, trial: optuna.Trial | None = None) -> float:
                 moe.eval()
                 with torch.no_grad():
                     xh, w, _ = moe(fixed[0][:6].to(device))
-                tracker.image("samples/clean|input|output", image_row_grid(
-                    [list(fixed[1][:6]), list(fixed[0][:6]), list(xh.float())]), step=step)
+                tracker.image("samples/grid", image_row_grid(
+                    [list(fixed[1][:6]), list(fixed[0][:6]), list(xh.float())]), step=step,
+                    caption="rows: clean | input | output")
             step += 1
     if trial is None:
         save_json({"best_val_score": best, "config": cfg}, odir / "summary.json")

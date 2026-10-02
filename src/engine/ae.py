@@ -125,7 +125,7 @@ def run(cfg: dict, trial: optuna.Trial | None = None) -> float:
                 xt, xc = fixed[0][:6].to(device), fixed[1][:6].to(device)
                 xh = model(xt).float()
             grid = image_row_grid([list(xc), list(xt), list(xh), list((xh - xc).abs() * 3)])
-            tracker.image("samples/clean|input|output|err", grid, step=epoch)
+            tracker.image("samples/grid", grid, step=epoch, caption="rows: clean | input | output | abs error x3")
 
     if trial is None:
         save_json({"best_val_score": best, "config": cfg}, odir / "summary.json")

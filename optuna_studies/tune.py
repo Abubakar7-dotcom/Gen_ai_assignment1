@@ -106,7 +106,9 @@ def main():
                                 pruner=optuna.pruners.MedianPruner(n_startup_trials=3, n_warmup_steps=1))
     done = len([t for t in study.trials if t.state.is_finished()])
     n_trials = 2 if a.smoke else max(0, (a.trials or n_default) - done)
-    study.optimize(objective, n_trials=n_trials, gc_after_trial=True)
+    # hand cached GPU memory back after every trial: the 6 GB card is shared with other processes
+    study.optimize(objective, n_trials=n_trials, gc_after_trial=True,
+                   callbacks=[lambda study, trial: torch.cuda.empty_cache()])
 
     out = ROOT / "results" / a.task / "optuna"
     out.mkdir(parents=True, exist_ok=True)
