@@ -1,0 +1,21 @@
+{
+  "task": "t1",
+  "n_trials": 15,
+  "n_complete": 10,
+  "n_pruned": 5,
+  "trial_overrides": {
+    "epochs": 4,
+    "train_subset": 0.5,
+    "val_subset": 0.5
+  },
+  "best_value": 0.4683010518550873,
+  "best_trial": 9,
+  "best_params": {
+    "lr": 0.0004609897972837507,
+    "batch_size": 32,
+    "latent_ch": 8,
+    "base": 48,
+    "dropout": 0.002085639159357211,
+    "alpha": 0.7298362861599046
+  }
+}
