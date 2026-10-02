@@ -10,3 +10,7 @@ Each entry: decision, alternatives considered, evidence / reason, effect. Feeds 
 - **Occlusion coverage measured as union area of rectangles (boolean mask), resampled until within range.** Summing rectangle areas over-counts overlaps and would violate the 10–35% spec.
 - **Balanced batch sampler (exactly B/4 per condition per batch)** instead of i.i.d. uniform sampling: satisfies Task 2's "balanced batches" requirement deterministically and lowers gradient variance across conditions.
 - **Clean 128×128 images cached once as a uint8 array.** Corruptions are still sampled at runtime (spec forbids saving corrupted copies). Removes JPEG decode + resize from the loop, which is the main CPU bottleneck on a laptop.
+- **Pet images taken from the Hugging Face mirror `timm/oxford-iiit-pet` (`scripts/pets_from_hf.py`), ids and split order from the official annotation files.**
+  Alternative: the official `images.tar.gz` (what `prepare_data --pets` downloads by default). Rejected on the GPU PC only for speed: the Oxford server gave 30–60 KB/s (4+ h for 790 MB) against >1 MB/s from the mirror.
+  Evidence the mirror is the same data: 3,680 trainval + 3,669 test images, the same counts as the official `trainval.txt` / `test.txt`; the files are the original bytes, including the four official `.jpg` files that are really PNGs (`Egyptian_Mau_14/156/186`, `Abyssinian_5`). The script asserts the mirror's ids equal the official id lists.
+  Effect: none on the split (seed 42 over the official `trainval.txt` order) or on the 128×128 cache.

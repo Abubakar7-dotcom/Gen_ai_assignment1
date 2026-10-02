@@ -43,6 +43,8 @@ wandb login
 * **Oxford-IIIT Pet**: downloaded automatically by `python -m scripts.prepare_data --pets`.
   This writes `data/splits/pets_split.json` (80/20 split, seed 42), the deterministic manifests
   `data/manifests/{val,test}.json` and a 128×128 cache.
+  If the Oxford server is slow, run `python -m scripts.pets_from_hf` first (same images from the Hugging Face
+  mirror, needs `pyarrow`); `prepare_data --pets` then only downloads the small annotations archive.
 * **FS2K**: download from https://github.com/DengPingFan/FS2K and extract to `data/raw/FS2K/`
   (`photo/`, `sketch/`, `anno_train.json`, `anno_test.json`). Then run `python -m scripts.prepare_data --fs2k`,
   which checks every photo↔sketch pairing and writes a stratified 15% val split.

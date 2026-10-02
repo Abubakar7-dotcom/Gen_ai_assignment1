@@ -167,9 +167,9 @@ Test severities (each test image × each corruption × 3 levels, plus clean):
 - [x] Repo scaffold, requirements, .gitignore
 - [ ] Stitch design + screenshots (student)
 - [x] Corruptions + balanced sampler + manifests code (tests pass)
-- [ ] Pets split/cache/manifests GENERATED (needs annotations + images) + sanity grid
+- [x] Pets split/cache/manifests GENERATED + sanity grid (2944 train / 736 val / 3669 test)
 - [x] FS2K loader + pairing check code
-- [ ] FS2K cache + split GENERATED (needs dataset)
+- [x] FS2K cache + split GENERATED (899 train / 159 val / 1046 test, 0 pairing problems)
 - [x] All models, engines, Optuna, eval, ONNX export code (CPU smoke-tested)
 - [ ] T4 Optuna → full train (background)
 - [ ] T1 Optuna → full train

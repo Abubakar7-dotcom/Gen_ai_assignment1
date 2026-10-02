@@ -1,0 +1,26 @@
+{
+  "train": {
+    "pairs": 1058,
+    "problems": [],
+    "n_problems": 0
+  },
+  "test": {
+    "pairs": 1046,
+    "problems": [],
+    "n_problems": 0
+  },
+  "split": {
+    "0": {
+      "train": 303,
+      "val": 54
+    },
+    "1": {
+      "train": 298,
+      "val": 52
+    },
+    "2": {
+      "train": 298,
+      "val": 53
+    }
+  }
+}
