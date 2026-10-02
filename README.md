@@ -74,7 +74,9 @@ python -m eval.evaluate --task t1    # t2, t3, t4 -> results/<task>/
 python -m export.export_onnx         # models_onnx/*.onnx + results/onnx_parity.csv (PyTorch vs ONNX Runtime)
 python -m scripts.make_samples       # bundle a few test images for the app
 ```
-On Windows, `scripts\gpu_chain_gan.ps1` and `scripts\gpu_chain_restoration.ps1` run these steps in order.
+On Windows, `scripts\setup_gpu_pc.ps1` prepares the GPU machine (Python, venv, CUDA PyTorch), and
+`scripts\gpu_chain_gan.ps1` and `scripts\gpu_chain_restoration.ps1` run these steps in order.
+`docs/gpu_runbook.md` lists the full GPU run stage by stage.
 
 ---
 

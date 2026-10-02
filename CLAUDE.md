@@ -142,7 +142,7 @@ Test severities (each test image × each corruption × 3 levels, plus clean):
 
 ## Compute notes — two machines
 - **DEV machine (no GPU):** write code, CPU smoke tests (`--smoke`: 2 batches, 1 epoch), data pipeline, backend, frontend, Docker, report.
-- **GPU machine:** runs Optuna studies, full training, evaluation, ONNX export. GPU: **RTX 4050 (6 GB VRAM, likely laptop)**. OS: **Windows** (roommate's PC, reached over Tailscale + SSH).
+- **GPU machine:** runs Optuna studies, full training, evaluation, ONNX export. GPU: **RTX 4050 (6 GB VRAM, likely laptop)**. OS: **Windows** (roommate's PC). Claude Code runs **locally on that PC** in a clone of this repo and follows `docs/gpu_runbook.md`; the student steers that session from the DEV PC. No SSH/Tailscale.
   - Use AMP (`torch.autocast` + `GradScaler`), `cudnn.benchmark=True`.
   - Optuna batch-size caps: AEs/classifier ≤ 128, MoE ≤ 64, cGAN ≤ 32. Catch CUDA OOM inside objectives → `raise optuna.TrialPruned()`.
   - Data loading is the likely bottleneck (laptop CPU): cache clean 128px images as a uint8 `.npy`, `num_workers=2–4`, `pin_memory=True`, `persistent_workers=True`.
@@ -153,7 +153,7 @@ Test severities (each test image × each corruption × 3 levels, plus clean):
 - **Small results DO go through git:** `results/**` (CSV, PNG), `optuna_studies/*.db`, `best_params.json` — commit from the GPU machine after each run.
 - **Commit identity on the GPU machine:** set repo-local `git config user.name/user.email` to the student's identity (individual assignment).
 - **Tracking: use Weights & Biases** (cloud) so runs on the GPU machine are visible from the DEV machine.
-- Long jobs on the GPU machine run inside `tmux`/`screen` (Linux) or a persistent terminal; all scripts resumable from last checkpoint.
+- Long jobs on the GPU machine run as background tasks or in a persistent terminal; all scripts resumable from last checkpoint.
 - Windows GPU machine: every training script needs `if __name__ == "__main__":` guard (DataLoader workers use spawn); start with `num_workers=2`.
 - Every script takes `--device auto` (cuda if available else cpu) and `--data-root`; no hardcoded paths.
 - Budget is tight: Optuna 10–15 trials, few epochs, subset of train during search, then full retrain of best config. State this trade-off in the report.
@@ -187,6 +187,11 @@ Test severities (each test image × each corruption × 3 levels, plus clean):
 - [ ] IEEE report
 - [ ] Demo video + link
 - [ ] Final push + submit
+
+## Handoff — which machine are you on?
+- Check with `nvidia-smi`. **If it shows the RTX 4050, you are on the GPU PC: follow `docs/gpu_runbook.md` stage by stage.**
+- Otherwise you are on the DEV PC (no GPU): app, Docker, report; never start real training here.
+- Nothing is trained yet; the code has only run on synthetic images (`--smoke`). `scripts/setup_gpu_pc.ps1` and `docker compose up` have never run on a real machine.
 
 ## Open decisions / notes
 - Smoke check of everything on CPU: `pytest -q tests/` and `python -m train.train --task <t> --smoke`.
