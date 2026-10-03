@@ -178,7 +178,7 @@ Test severities (each test image × each corruption × 3 levels, plus clean):
 - [x] FastAPI backend (all endpoints, tested with smoke ONNX models)
 - [x] ONNX export + parity for TRAINED models (7 models, max abs diff 6.6e-6)
 - [ ] Release `models-v1`: student runs `scripts\publish_models.ps1` on the GPU PC (download URL already set)
-- [ ] W&B checkpoint artifacts: student runs `python -m scripts.wandb_log_checkpoints` on the GPU PC
+- [x] W&B checkpoint artifacts logged to the original training runs (`scripts/wandb_log_checkpoints.py`)
 - [x] T1 ablations: bottleneck 64 and one limited skip (`results/ablations/t1_bottleneck.csv`)
 - [x] Eval scripts + all figures/tables in `results/` (T1–T4 test set)
 
@@ -194,8 +194,8 @@ Test severities (each test image × each corruption × 3 levels, plus clean):
 ## Handoff — which machine are you on?
 - Check with `nvidia-smi`. **If it shows the RTX 4050, you are on the GPU PC: follow `docs/gpu_runbook.md` stage by stage.**
 - Otherwise you are on the DEV PC (no GPU): app, Docker, report; never start real training here.
-- All training is done (GPU PC, 2026-10-03); checkpoints and ONNX files live only on the GPU PC until the
-  release `models-v1` exists. `docker compose up` has never run on a real machine.
+- All training is done (GPU PC, 2026-10-03); checkpoints and ONNX files are in the
+  release `models-v1`. `docker compose up` has never run on a real machine.
 
 ## Open decisions / notes
 - Smoke check of everything on CPU: `pytest -q tests/` and `python -m train.train --task <t> --smoke`.
