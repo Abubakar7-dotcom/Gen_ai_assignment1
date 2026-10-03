@@ -93,6 +93,14 @@ class Tracker:
         if self.run:
             self.run.summary.update(data)
 
+    def checkpoint(self, path: str | Path, name: str, metadata: dict | None = None) -> None:
+        """Log a checkpoint file as a W&B model artifact (alias 'best'), so checkpoints are tracked with the run."""
+        if self.run and Path(path).exists():
+            import wandb
+            art = wandb.Artifact(name, type="model", metadata=metadata or {})
+            art.add_file(str(path))
+            self.run.log_artifact(art, aliases=["best"])
+
     def finish(self) -> None:
         if self.run:
             self.run.finish()

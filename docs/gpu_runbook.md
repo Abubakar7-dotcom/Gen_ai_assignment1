@@ -137,6 +137,10 @@ python -m scripts.make_samples
 - Upload `models_onnx/*.onnx` to a GitHub Release named `models-v1`. This publishes files on a
   public repo — confirm with the student first. Then set the release URL in
   `scripts/download_models.sh` and `scripts/download_models.ps1`, commit and push.
+  - Done by `scripts\publish_models.ps1` (the student runs it; it also uploads the submitted checkpoints
+    and SHA256SUMS.txt). The download URL is already set.
+- Checkpoints in W&B: runs trained from now on log `best.pt` as a model artifact (`Tracker.checkpoint`).
+  For the runs trained before that, run `python -m scripts.wandb_log_checkpoints` once.
 
 ## What stays on the DEV PC
 

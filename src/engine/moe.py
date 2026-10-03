@@ -127,7 +127,7 @@ def run(cfg: dict, trial: optuna.Trial | None = None) -> float:
                                     gate_cfg=moe.gate.cfg, expert_cfgs=[e.cfg for e in moe.experts])
             if trial is None:
                 save_checkpoint(odir / "last.pt", moe=moe.state_dict(), tau=moe.tau, epoch=step, best=best,
-                                gate_cfg=moe.gate.cfg, expert_cfgs=[e.cfg for e in moe.experts])
+                                run_id=tracker.id, gate_cfg=moe.gate.cfg, expert_cfgs=[e.cfg for e in moe.experts])
                 moe.eval()
                 with torch.no_grad():
                     xh, w, _ = moe(fixed[0][:6].to(device))
@@ -137,5 +137,6 @@ def run(cfg: dict, trial: optuna.Trial | None = None) -> float:
             step += 1
     if trial is None:
         save_json({"best_val_score": best, "config": cfg}, odir / "summary.json")
+        tracker.checkpoint(odir / "best.pt", cfg.get("run_name", "t3-moe"), {"best_val_score": best})
     tracker.finish()
     return best

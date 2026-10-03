@@ -176,7 +176,10 @@ Test severities (each test image × each corruption × 3 levels, plus clean):
 - [x] T2 classifier Optuna → train; specialists shared Optuna → train ×3 (test: classifier acc 0.996, macro-F1 0.993)
 - [x] T3 warm-up + joint fine-tune + Optuna (best checkpoint = end of warm-up, see docs/decisions.md)
 - [x] FastAPI backend (all endpoints, tested with smoke ONNX models)
-- [x] ONNX export + parity for TRAINED models (7 models, max abs diff 6.6e-6; release upload pending)
+- [x] ONNX export + parity for TRAINED models (7 models, max abs diff 6.6e-6)
+- [ ] Release `models-v1`: student runs `scripts\publish_models.ps1` on the GPU PC (download URL already set)
+- [ ] W&B checkpoint artifacts: student runs `python -m scripts.wandb_log_checkpoints` on the GPU PC
+- [x] T1 ablations: bottleneck 64 and one limited skip (`results/ablations/t1_bottleneck.csv`)
 - [x] Eval scripts + all figures/tables in `results/` (T1–T4 test set)
 
 **Day 2**
@@ -191,10 +194,11 @@ Test severities (each test image × each corruption × 3 levels, plus clean):
 ## Handoff — which machine are you on?
 - Check with `nvidia-smi`. **If it shows the RTX 4050, you are on the GPU PC: follow `docs/gpu_runbook.md` stage by stage.**
 - Otherwise you are on the DEV PC (no GPU): app, Docker, report; never start real training here.
-- Nothing is trained yet; the code has only run on synthetic images (`--smoke`). `scripts/setup_gpu_pc.ps1` and `docker compose up` have never run on a real machine.
+- All training is done (GPU PC, 2026-10-03); checkpoints and ONNX files live only on the GPU PC until the
+  release `models-v1` exists. `docker compose up` has never run on a real machine.
 
 ## Open decisions / notes
 - Smoke check of everything on CPU: `pytest -q tests/` and `python -m train.train --task <t> --smoke`.
 - GPU order: start `scripts/gpu_chain_gan.ps1` first (longest), then `scripts/gpu_chain_restoration.ps1` in a 2nd terminal.
-- After training: `python -m export.export_onnx`, `python -m scripts.make_samples`, upload `models_onnx/*.onnx`
-  to a GitHub Release `models-v1`, set the URL in `scripts/download_models.*`.
+- After training: `python -m export.export_onnx`, `python -m scripts.make_samples`, then
+  `scripts\publish_models.ps1` creates the Release `models-v1` (URL already set in `scripts/download_models.*`).

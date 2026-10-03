@@ -18,7 +18,7 @@ Stack: PyTorch · Optuna · Weights & Biases · ONNX Runtime · FastAPI · React
 Requirements: Git and Docker Desktop (or Docker Engine + Compose v2).
 
 ```bash
-git clone <REPO_URL> restoration-lab && cd restoration-lab
+git clone https://github.com/Abubakar7-dotcom/Gen_ai_assignment1.git restoration-lab && cd restoration-lab
 bash scripts/download_models.sh            # Windows: powershell -ExecutionPolicy Bypass -File scripts\download_models.ps1
 docker compose up --build
 ```
@@ -26,7 +26,7 @@ docker compose up --build
 Open **http://localhost:8080**. The API is reachable through the same port under `/api` (e.g. `http://localhost:8080/api/health`).
 To stop: `Ctrl+C`, then `docker compose down`.
 
-Trained ONNX models: <MODEL_RELEASE_URL> (GitHub Release `models-v1`). They are not stored in git.
+Trained models: [GitHub Release `models-v1`](https://github.com/Abubakar7-dotcom/Gen_ai_assignment1/releases/tag/models-v1) (7 ONNX files for the app, plus the PyTorch checkpoints and `SHA256SUMS.txt`). They are not stored in git.
 
 ---
 

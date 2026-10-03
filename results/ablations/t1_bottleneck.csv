@@ -1,3 +1,4 @@
 model,latent_ch,latent_values,val_objective_best,val_psnr,val_ssim,psnr_clean,psnr_salt_pepper,psnr_blur,psnr_occlusion,ssim_occlusion
 t1 (Optuna best),8,512,0.6003,22.388,0.6394,22.887,22.962,23.221,20.481,0.5953
 t1 ablation,64,4096,0.6303,23.145,0.6809,23.812,23.839,24.113,20.815,0.6276
+t1 ablation one limited skip (8x32x32),8,512,0.7633,27.280,0.8440,29.279,28.888,28.827,22.128,0.7571

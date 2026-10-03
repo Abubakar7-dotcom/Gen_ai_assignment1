@@ -140,5 +140,6 @@ def run(cfg: dict, trial: optuna.Trial | None = None) -> float:
                 cv2.imwrite(str(odir / "samples" / f"epoch_{epoch:03d}.png"), cv2.cvtColor(grid, cv2.COLOR_RGB2BGR))
     if trial is None:
         save_json({"best_val_score": best, "config": cfg}, odir / "summary.json")
+        tracker.checkpoint(odir / "best_G.pt", cfg.get("run_name", "t4-cgan"), {"best_val_score": best})
     tracker.finish()
     return best

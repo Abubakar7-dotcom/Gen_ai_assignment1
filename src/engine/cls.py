@@ -94,5 +94,6 @@ def run(cfg: dict, trial: optuna.Trial | None = None) -> float:
     if trial is None:
         save_json({"best_val_macro_f1": best, "config": cfg}, odir / "summary.json")
         tracker.summary({"best_val_macro_f1": best})
+        tracker.checkpoint(odir / "best.pt", cfg.get("run_name", "t2-classifier"), {"best_val_macro_f1": best})
     tracker.finish()
     return best
