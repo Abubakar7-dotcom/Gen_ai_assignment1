@@ -177,7 +177,7 @@ Test severities (each test image × each corruption × 3 levels, plus clean):
 - [x] T3 warm-up + joint fine-tune + Optuna (best checkpoint = end of warm-up, see docs/decisions.md)
 - [x] FastAPI backend (all endpoints, tested with smoke ONNX models)
 - [x] ONNX export + parity for TRAINED models (7 models, max abs diff 6.6e-6)
-- [ ] Release `models-v1`: student runs `scripts\publish_models.ps1` on the GPU PC (download URL already set)
+- [x] Release `models-v1` published (7 ONNX + 8 checkpoints + SHA256SUMS; fresh download verified)
 - [x] W&B checkpoint artifacts logged to the original training runs (`scripts/wandb_log_checkpoints.py`)
 - [x] T1 ablations: bottleneck 64 and one limited skip (`results/ablations/t1_bottleneck.csv`)
 - [x] Eval scripts + all figures/tables in `results/` (T1–T4 test set)
