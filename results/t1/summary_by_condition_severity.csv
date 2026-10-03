@@ -1,0 +1,11 @@
+condition,severity,psnr_in,psnr_out,ssim_in,ssim_out
+clean,none,100.0,22.8855,1.0,0.6527
+salt_pepper,low,20.1462,22.9198,0.6013,0.6524
+salt_pepper,medium,15.8744,22.9467,0.3366,0.6509
+salt_pepper,high,13.1443,22.9153,0.2014,0.6474
+blur,low,32.1465,22.9945,0.9373,0.6535
+blur,medium,26.8942,23.1248,0.8038,0.6493
+blur,high,24.5252,22.9984,0.6947,0.6324
+occlusion,low,16.6925,21.7268,0.8615,0.6268
+occlusion,medium,13.3693,20.5495,0.7315,0.5976
+occlusion,high,10.803,18.9804,0.5486,0.55

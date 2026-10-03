@@ -172,7 +172,7 @@ Test severities (each test image × each corruption × 3 levels, plus clean):
 - [x] FS2K cache + split GENERATED (899 train / 159 val / 1046 test, 0 pairing problems)
 - [x] All models, engines, Optuna, eval, ONNX export code (CPU smoke-tested)
 - [x] T4 Optuna → full train → test evaluation (val objective 0.704; test L1 0.103, SSIM 0.481)
-- [x] T1 Optuna → full train (val objective 0.600; evaluation still to run)
+- [x] T1 Optuna → full train → test evaluation (val objective 0.600; test PSNR 22.2 dB, SSIM 0.631)
 - [ ] T2 classifier Optuna → train; specialists shared Optuna → train ×3
 - [ ] T3 warm-up + joint fine-tune + Optuna
 - [x] FastAPI backend (all endpoints, tested with smoke ONNX models)
