@@ -1,0 +1,21 @@
+{
+  "task": "t3",
+  "n_trials": 10,
+  "n_complete": 9,
+  "n_pruned": 1,
+  "trial_overrides": {
+    "warmup_epochs": 1,
+    "joint_epochs": 3,
+    "train_subset": 0.5,
+    "val_subset": 0.5
+  },
+  "best_value": 0.8645444810390472,
+  "best_trial": 7,
+  "best_params": {
+    "l1_w": 0.8637788066524075,
+    "joint_lr": 2.8180680291847213e-05,
+    "tau": 0.6465081710095758,
+    "ce_w": 0.1453755557616192,
+    "bal_w": 0.007591104805282696
+  }
+}
