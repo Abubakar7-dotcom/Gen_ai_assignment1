@@ -1,0 +1,8 @@
+model,file,size_mb,max_abs_diff,pass
+t1_universal,t1_universal.onnx,20.57,2.3543834686279297e-06,True
+t2_classifier,t2_classifier.onnx,4.48,1.1920928955078125e-07,True
+t2_spec_salt_pepper,t2_spec_salt_pepper.onnx,20.57,4.9173831939697266e-06,True
+t2_spec_blur,t2_spec_blur.onnx,20.57,3.2782554626464844e-06,True
+t2_spec_occlusion,t2_spec_occlusion.onnx,20.57,2.473592758178711e-06,True
+t3_moe,t3_moe.onnx,66.23,2.6226043701171875e-06,True
+t4_generator,t4_generator.onnx,160.71,6.556510925292969e-06,True

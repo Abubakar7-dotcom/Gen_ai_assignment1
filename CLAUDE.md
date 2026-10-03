@@ -176,7 +176,7 @@ Test severities (each test image × each corruption × 3 levels, plus clean):
 - [x] T2 classifier Optuna → train; specialists shared Optuna → train ×3 (test: classifier acc 0.996, macro-F1 0.993)
 - [x] T3 warm-up + joint fine-tune + Optuna (best checkpoint = end of warm-up, see docs/decisions.md)
 - [x] FastAPI backend (all endpoints, tested with smoke ONNX models)
-- [ ] ONNX export + parity for TRAINED models
+- [x] ONNX export + parity for TRAINED models (7 models, max abs diff 6.6e-6; release upload pending)
 - [x] Eval scripts + all figures/tables in `results/` (T1–T4 test set)
 
 **Day 2**
