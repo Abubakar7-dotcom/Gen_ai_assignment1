@@ -1,0 +1,5 @@
+condition,psnr_in,psnr_out,ssim_in,ssim_out
+clean,100.0,93.3037,1.0,0.9963
+salt_pepper,16.3883,22.6557,0.3798,0.6517
+blur,27.8553,22.7752,0.8119,0.6467
+occlusion,13.6216,20.5698,0.7138,0.6047

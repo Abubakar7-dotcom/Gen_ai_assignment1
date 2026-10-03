@@ -1,0 +1,16 @@
+{
+  "mean_weight": {
+    "clean": 0.1052,
+    "salt_pepper": 0.3,
+    "blur": 0.3013,
+    "occlusion": 0.2936
+  },
+  "argmax_share": {
+    "clean": 0.1044,
+    "salt_pepper": 0.3,
+    "blur": 0.3009,
+    "occlusion": 0.2947
+  },
+  "gate_accuracy_vs_true_label": 0.9926955573725811,
+  "inactive_branches": []
+}

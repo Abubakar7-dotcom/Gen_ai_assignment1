@@ -1,0 +1,5 @@
+condition,w_clean,w_salt_pepper,w_blur,w_occlusion
+clean,0.9814,0.0,0.0125,0.0061
+salt_pepper,0.0,1.0,0.0,0.0
+blur,0.0004,0.0,0.9996,0.0
+occlusion,0.023,0.0,0.0005,0.9765

@@ -1,0 +1,11 @@
+condition,severity,misrouted
+blur,high,0.0
+blur,low,0.0
+blur,medium,0.0
+clean,none,0.0082
+occlusion,high,0.0
+occlusion,low,0.0319
+occlusion,medium,0.0005
+salt_pepper,high,0.0
+salt_pepper,low,0.0
+salt_pepper,medium,0.0
