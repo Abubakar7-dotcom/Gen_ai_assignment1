@@ -196,6 +196,8 @@ Test severities (each test image × each corruption × 3 levels, plus clean):
 - Otherwise you are on the DEV PC (no GPU): app, Docker, report; never start real training here.
 - All training is done (GPU PC, 2026-10-03); checkpoints and ONNX files are in the
   release `models-v1`. `docker compose up` has never run on a real machine.
+- **On the DEV PC, read `docs/handoff_devpc.md` first**: current results, what is verified, remaining work
+  in order, open decisions for the student.
 
 ## Open decisions / notes
 - Smoke check of everything on CPU: `pytest -q tests/` and `python -m train.train --task <t> --smoke`.
