@@ -11,5 +11,8 @@ COPY src/data/__init__.py src/data/corruptions.py /srv/src/data/
 COPY backend/app ./app
 COPY backend/samples ./samples
 EXPOSE 8000
-HEALTHCHECK --interval=15s --timeout=5s --retries=5 CMD python -c "import urllib.request;urllib.request.urlopen('http://localhost:8000/health')"
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# start-period covers the first start, when fetch_models downloads ~330 MB of ONNX files
+HEALTHCHECK --interval=10s --timeout=5s --start-period=15m --retries=6 \
+    CMD python -c "import urllib.request;urllib.request.urlopen('http://localhost:8000/health')"
+# 1) fetch/verify the ONNX models (skipped quickly when they are already present), 2) start the API
+CMD ["sh", "-c", "python -m app.fetch_models && exec uvicorn app.main:app --host 0.0.0.0 --port 8000"]

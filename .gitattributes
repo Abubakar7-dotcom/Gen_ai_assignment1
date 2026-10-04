@@ -1,0 +1,5 @@
+# Files used inside Linux containers or by bash must keep LF endings, even on Windows checkouts (core.autocrlf).
+*.sh             text eol=lf
+Dockerfile       text eol=lf
+*.conf           text eol=lf
+docker-compose.yml text eol=lf

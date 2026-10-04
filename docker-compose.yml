@@ -1,12 +1,14 @@
-# One command: `docker compose up --build`  ->  http://localhost:8080
-# Models: run scripts/download_models (sh or ps1) first; they land in ./models_onnx, mounted read-only.
+# One command (from the repository root):  docker compose up --build   ->  http://localhost:8080
+# On first start the backend downloads the trained ONNX models (~330 MB, checksum-verified) from the GitHub
+# Release into ./models_onnx; later starts reuse them. scripts/download_models.(sh|ps1) do the same by hand.
+# Port busy? Set APP_PORT, e.g.  APP_PORT=9090 docker compose up --build
 services:
   backend:
     build:
       context: .
       dockerfile: backend/Dockerfile
     volumes:
-      - ./models_onnx:/models:ro
+      - ./models_onnx:/models
     environment:
       - MODELS_DIR=/models
     restart: unless-stopped
@@ -14,7 +16,7 @@ services:
   frontend:
     build: ./frontend
     ports:
-      - "8080:80"
+      - "${APP_PORT:-8080}:80"
     depends_on:
       backend:
         condition: service_healthy

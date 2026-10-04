@@ -1,11 +1,19 @@
+# Backend build context = repo root; the image only needs backend/ and src/data/corruptions.py.
+.git
+.venv
+venv
 data
 checkpoints
 models_onnx
 wandb
-frontend/node_modules
-frontend/dist
+mlruns
+frontend
 report
 results
-optuna_studies/*.db
-.git
+docs
+submission
+optuna_studies
+tests
 **/__pycache__
+**/*.pyc
+**/node_modules
