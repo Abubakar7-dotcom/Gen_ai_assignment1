@@ -94,7 +94,9 @@ def example_grid(ds, df, items, restore_fn, device, path, title, annot=None):
             else:
                 ax.imshow(img.permute(1, 2, 0).clamp(0, 1).numpy())
             ax.set_title(t, fontsize=7); ax.axis("off")
-    fig.suptitle(title, fontsize=10); fig.tight_layout(); fig.savefig(path, dpi=130); plt.close(fig)
+    fig.suptitle(title, fontsize=10)
+    fig.tight_layout(rect=(0, 0, 1, 1 - 0.45 / fig.get_figheight()))   # keep the title clear of the first row
+    fig.savefig(path, dpi=130); plt.close(fig)
 
 
 def pick_examples(df: pd.DataFrame, n_per=1, seed=0) -> list[int]:
@@ -122,20 +124,28 @@ def pick_failures(df: pd.DataFrame, n=4, key="ssim_out") -> list[int]:
     return out
 
 
+def saved_results(data, out):
+    """--figures-only: reuse the saved per-item results instead of re-running the test set (figures only)."""
+    return pd.read_csv(out / "per_item.csv"), ManifestDataset(data["test"], data["test_items"])
+
+
 # ----------------------------------------------------------------- tasks
-def eval_t1(data, device, out, smoke):
+def eval_t1(data, device, out, smoke, figures_only=False):
     from src.loaders import load_ae
     from src.models.autoencoder import DenoisingAE
     model = (DenoisingAE(base=8, latent_ch=8).eval() if smoke else load_ae("t1")).to(device)
     fn = lambda x, c: (model(x).float(), {})
-    df, ds = run_restoration(fn, data, device)
-    df.to_csv(out / "per_item.csv", index=False)
-    summarize(df, ["psnr_in", "psnr_out", "ssim_in", "ssim_out"], out)
+    if figures_only:
+        df, ds = saved_results(data, out)
+    else:
+        df, ds = run_restoration(fn, data, device)
+        df.to_csv(out / "per_item.csv", index=False)
+        summarize(df, ["psnr_in", "psnr_out", "ssim_in", "ssim_out"], out)
     example_grid(ds, df, pick_examples(df), fn, device, out / "examples.png", "Task 1: universal DAE (test set)")
     example_grid(ds, df, pick_failures(df), fn, device, out / "failures.png", "Task 1: lowest-SSIM failure cases")
 
 
-def eval_t2(data, device, out, smoke):
+def eval_t2(data, device, out, smoke, figures_only=False):
     from src.loaders import HardRouter, load_classifier, load_specialists
     if smoke:
         from src.models.autoencoder import DenoisingAE
@@ -147,6 +157,22 @@ def eval_t2(data, device, out, smoke):
     router = router.eval().to(device)
     pred_fn = lambda x, c: (lambda o: (o[0].float(), {"pred": o[2], "probs": o[1]}))(router(x))
     oracle_fn = lambda x, c: (router(x, route=c)[0].float(), {})
+    if figures_only:
+        df, ds = saved_results(data, out)
+    else:
+        df, ds = _eval_t2_metrics(pred_fn, oracle_fn, data, device, out)
+    df["ssim_out"] = df["ssim_pred"]
+    annot = lambda r: f"pred={CONDITIONS[int(r['pred'])]}"
+    example_grid(ds, df, pick_examples(df), pred_fn, device, out / "examples.png",
+                 "Task 2: hard routing (predicted)", annot)
+    bad = df[df.misrouted].assign(gap=lambda d: d.ssim_oracle - d.ssim_pred).sort_values("gap", ascending=False)
+    items = bad.drop_duplicates("id")["item"].head(4).astype(int).tolist()
+    if items:
+        example_grid(ds, df, items, pred_fn, device, out / "misrouting_failures.png",
+                     "Task 2: failures caused by classifier errors", annot)
+
+
+def _eval_t2_metrics(pred_fn, oracle_fn, data, device, out):
     df_p, ds = run_restoration(pred_fn, data, device)
     df_o, _ = run_restoration(oracle_fn, data, device)
     df = df_p.rename(columns={"psnr_out": "psnr_pred", "ssim_out": "ssim_pred"})
@@ -162,16 +188,7 @@ def eval_t2(data, device, out, smoke):
     mis.to_csv(out / "misrouting_rate.csv")
     summarize(df, ["psnr_in", "psnr_oracle", "psnr_pred", "ssim_in", "ssim_oracle", "ssim_pred"], out)
     print("classifier acc", rep["accuracy"], "macro F1", rep["macro_f1"])
-
-    df["ssim_out"] = df["ssim_pred"]
-    annot = lambda r: f"pred={CONDITIONS[int(r['pred'])]}"
-    example_grid(ds, df, pick_examples(df), pred_fn, device, out / "examples.png",
-                 "Task 2: hard routing (predicted)", annot)
-    bad = df[df.misrouted].assign(gap=lambda d: d.ssim_oracle - d.ssim_pred).sort_values("gap", ascending=False)
-    items = bad.drop_duplicates("id")["item"].head(4).astype(int).tolist()
-    if items:
-        example_grid(ds, df, items, pred_fn, device, out / "misrouting_failures.png",
-                     "Task 2: failures caused by classifier errors", annot)
+    return df, ds
 
 
 def _confusion_plot(cm, path):
@@ -185,7 +202,7 @@ def _confusion_plot(cm, path):
     fig.tight_layout(); fig.savefig(path, dpi=140); plt.close(fig)
 
 
-def eval_t3(data, device, out, smoke):
+def eval_t3(data, device, out, smoke, figures_only=False):
     from src.loaders import load_moe
     if smoke:
         from src.models.autoencoder import DenoisingAE
@@ -196,6 +213,20 @@ def eval_t3(data, device, out, smoke):
         moe = load_moe()
     moe = moe.eval().to(device)
     fn = lambda x, c: (lambda o: (o[0].float(), {"w": o[1].float()}))(moe(x))
+    if figures_only:
+        df, ds = saved_results(data, out)
+    else:
+        df, ds = _eval_t3_metrics(fn, data, device, out)
+    annot = lambda r: " ".join(f"{c[:4]}:{r[f'w_{c}']:.2f}" for c in CONDITIONS)
+    dom = df[df.condition != "clean"].sort_values("entropy").drop_duplicates("id")["item"].head(3).astype(int).tolist()
+    dist = df.sort_values("entropy", ascending=False).drop_duplicates("id")["item"].head(3).astype(int).tolist()
+    example_grid(ds, df, dom + dist, fn, device, out / "dominant_vs_distributed.png",
+                 "Task 3: dominant (top 3) vs distributed (bottom 3) routing", annot)
+    example_grid(ds, df, pick_examples(df), fn, device, out / "examples.png", "Task 3: soft MoE (test set)", annot)
+    example_grid(ds, df, pick_failures(df), fn, device, out / "failures.png", "Task 3: failure cases", annot)
+
+
+def _eval_t3_metrics(fn, data, device, out):
     df, ds = run_restoration(fn, data, device)
     wcols = [f"w_{c}" for c in CONDITIONS]
     W = df[wcols].values
@@ -211,13 +242,7 @@ def eval_t3(data, device, out, smoke):
                  {c: i for i, c in enumerate(CONDITIONS)})).mean())}
     usage["inactive_branches"] = [c for c, s in usage["argmax_share"].items() if s < 0.02]
     save_json(usage, out / "expert_usage.json"); print(usage)
-    annot = lambda r: " ".join(f"{c[:4]}:{r[f'w_{c}']:.2f}" for c in CONDITIONS)
-    dom = df[df.condition != "clean"].sort_values("entropy").drop_duplicates("id")["item"].head(3).astype(int).tolist()
-    dist = df.sort_values("entropy", ascending=False).drop_duplicates("id")["item"].head(3).astype(int).tolist()
-    example_grid(ds, df, dom + dist, fn, device, out / "dominant_vs_distributed.png",
-                 "Task 3: dominant (top 3) vs distributed (bottom 3) routing", annot)
-    example_grid(ds, df, pick_examples(df), fn, device, out / "examples.png", "Task 3: soft MoE (test set)", annot)
-    example_grid(ds, df, pick_failures(df), fn, device, out / "failures.png", "Task 3: failure cases", annot)
+    return df, ds
 
 
 def _heatmap(heat: pd.DataFrame, path):
@@ -284,6 +309,8 @@ def main():
     ap.add_argument("--task", required=True, choices=["t1", "t2", "t3", "t4"])
     ap.add_argument("--smoke", action="store_true")
     ap.add_argument("--device", default="auto")
+    ap.add_argument("--figures-only", action="store_true",
+                    help="T1-T3: redraw the example/failure grids from the saved per_item.csv (no re-evaluation)")
     a = ap.parse_args()
     device = get_device(a.device)
     out = ROOT / "results" / (f"smoke_{a.task}" if a.smoke else a.task)
@@ -291,7 +318,7 @@ def main():
     if a.task == "t4":
         return eval_t4(device, out, a.smoke)
     data = pets_data({"smoke": a.smoke})
-    {"t1": eval_t1, "t2": eval_t2, "t3": eval_t3}[a.task](data, device, out, a.smoke)
+    {"t1": eval_t1, "t2": eval_t2, "t3": eval_t3}[a.task](data, device, out, a.smoke, a.figures_only)
 
 
 if __name__ == "__main__":
