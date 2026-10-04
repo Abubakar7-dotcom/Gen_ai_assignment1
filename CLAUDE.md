@@ -165,7 +165,7 @@ Test severities (each test image × each corruption × 3 levels, plus clean):
 
 **Day 1**
 - [x] Repo scaffold, requirements, .gitignore
-- [ ] Stitch design + screenshots (student)
+- [ ] Stitch design + screenshots (student; see `submission/README.md`)
 - [x] Corruptions + balanced sampler + manifests code (tests pass)
 - [x] Pets split/cache/manifests GENERATED + sanity grid (2944 train / 736 val / 3669 test)
 - [x] FS2K loader + pairing check code
@@ -185,10 +185,10 @@ Test severities (each test image × each corruption × 3 levels, plus clean):
 **Day 2**
 - [x] React frontend, 4 workspaces (tested against smoke backend)
 - [x] Dockerfiles + compose + model download scripts
-- [ ] Fresh-clone `docker compose up --build` test (not possible in dev sandbox: Docker Hub blocked)
-- [ ] README
-- [ ] IEEE report
-- [ ] Demo video + link
+- [x] Fresh-clone `docker compose up --build` test: GitHub Actions `docker.yml` (clean Linux runner) + local nginx/browser test
+- [x] README (one-command start, troubleshooting, results, report build)
+- [x] IEEE report draft (`report/main.tex`, pdfLaTeX CI `report.yml`); student fills name/roll no., Stitch, YouTube link
+- [ ] Demo video + link (student; script in `submission/demo_video_script.md`, Codespaces if no Docker)
 - [ ] Final push + submit
 
 ## Handoff — which machine are you on?

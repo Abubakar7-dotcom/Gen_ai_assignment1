@@ -3,7 +3,9 @@
     python -m scripts.report_figures
 
 Tall example grids from eval/evaluate.py (one example per row) are re-tiled into two columns so they fit an
-IEEE page. Rows are found from the white gaps between them; nothing is redrawn or edited.
+IEEE page. Rows are found from the white gaps between them; nothing is redrawn or edited. Photo grids are stored
+as JPEG (quality 90) to keep the PDF small; plots and UI screenshots stay PNG. Google Stitch screenshots saved in
+docs/stitch/ (01_universal.png ... 04_sketch.png) are copied too, and the report shows them automatically.
 """
 import shutil
 
@@ -15,19 +17,22 @@ from src.utils import ROOT
 RES, OUT = ROOT / "results", ROOT / "report" / "figures"
 COPY = {  # report name <- results path
     "sanity_grid.png": "data/corruption_sanity_grid.png",
-    "t1_failures.png": "t1/failures.png",
+    "t1_failures.jpg": "t1/failures.png",
     "t2_confusion.png": "t2/confusion_matrix.png",
-    "t2_misrouting.png": "t2/misrouting_failures.png",
+    "t2_misrouting.jpg": "t2/misrouting_failures.png",
     "t3_heatmap.png": "t3/routing_heatmap.png",
-    "t3_failures.png": "t3/failures.png",
-    "t4_failures.png": "t4/failures.png",
-    "ablation_skip.png": "ablations/t1_skip_examples.png",
-    **{f"optuna_{t}_{k}.png": f"{t}/optuna/{k}.png" for t in ["t1", "t2_cls", "t2_spec", "t3", "t4"]
-       for k in ["history", "importance"]},
+    "t4_failures.jpg": "t4/failures.png",
+    "ablation_skip.jpg": "ablations/t1_skip_examples.png",
+    "optuna_t1_history.png": "t1/optuna/history.png",
+    **{f"optuna_{t}_importance.png": f"{t}/optuna/importance.png" for t in ["t1", "t2_cls", "t2_spec", "t3", "t4"]},
 }
-RETILE = {"t1_examples.png": "t1/examples.png", "t2_examples.png": "t2/examples.png",
-          "t3_examples.png": "t3/examples.png", "t4_examples.png": "t4/examples.png",
-          "t3_dominant.png": "t3/dominant_vs_distributed.png"}
+RETILE = {"t1_examples.jpg": "t1/examples.png",
+          "t4_examples.jpg": "t4/examples.png", "t3_dominant.jpg": "t3/dominant_vs_distributed.png"}
+STITCH = ["01_universal", "02_hard", "03_moe", "04_sketch"]
+
+
+def save(img: Image.Image, dst):
+    img.convert("RGB").save(dst, quality=90, optimize=True) if dst.suffix == ".jpg" else img.save(dst)
 
 
 def row_bands(img: np.ndarray) -> list[tuple[int, int]]:
@@ -45,25 +50,32 @@ def row_bands(img: np.ndarray) -> list[tuple[int, int]]:
     return [(max(0, t - gap + 4), b + 4) for t, b in tiles]
 
 
-def retile(src, dst, cols=2):
+def retile(src, dst, cols=2, keep=None):
     img = np.asarray(Image.open(src).convert("RGB"))
     rows = [img[t:b] for t, b in row_bands(img)]
+    if keep is not None:                                  # subset of rows, e.g. two examples per style
+        rows = [rows[i] for i in keep]
     h = max(r.shape[0] for r in rows)
     rows = [np.pad(r, ((0, h - r.shape[0]), (0, 0), (0, 0)), constant_values=255) for r in rows]
     per_col = -(-len(rows) // cols)
     rows += [np.full_like(rows[0], 255)] * (per_col * cols - len(rows))
     columns = [np.vstack(rows[c * per_col:(c + 1) * per_col]) for c in range(cols)]
     spacer = np.full((columns[0].shape[0], 30, 3), 255, np.uint8)
-    Image.fromarray(np.hstack([columns[0], spacer, *columns[1:]])).save(dst)
+    save(Image.fromarray(np.hstack([columns[0], spacer, *columns[1:]])), dst)
     print(f"{dst.name}: {len(row_bands(img))} rows -> {cols} columns")
 
 
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     for name, rel in COPY.items():
-        shutil.copyfile(RES / rel, OUT / name)
+        save(Image.open(RES / rel), OUT / name)
+    for s in STITCH:
+        src = ROOT / "docs" / "stitch" / f"{s}.png"
+        if src.exists():
+            shutil.copyfile(src, OUT / f"stitch_{s}.png")
     for name, rel in RETILE.items():
-        retile(RES / rel, OUT / name)
+        # T4 grid rows are 4 examples per style; the report shows the first two of each style
+        retile(RES / rel, OUT / name, keep=[0, 4, 8, 1, 5, 9] if name.startswith("t4_") else None)
 
 
 if __name__ == "__main__":

@@ -41,6 +41,7 @@ report/*.out
 report/*.bbl
 report/*.blg
 report/*.synctex.gz
+report/main.pdf
 
 # transfer artifact
 .claude_sync*

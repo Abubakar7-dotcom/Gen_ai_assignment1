@@ -1,0 +1,24 @@
+# Builds the IEEE report with pdfLaTeX (TeX Live, same engine as Overleaf) and keeps the PDF as a run artifact.
+name: report-pdf
+
+on:
+  push:
+    branches: [main]
+    paths: ["report/**", ".github/workflows/report.yml"]
+  workflow_dispatch:
+
+jobs:
+  pdflatex:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: xu-cheng/latex-action@v3
+        with:
+          root_file: main.tex
+          working_directory: report
+          latexmk_use_pdflatex: true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: report-pdf
+          path: report/main.pdf
