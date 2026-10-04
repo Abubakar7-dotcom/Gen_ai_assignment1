@@ -26,37 +26,23 @@ own coursework, so ask the student first).
 - W&B: project `genai-a1` (entity `abubaknaveed-national-university-of-computer-and-emergi`). It holds every final run (losses, metrics, sample grids) and the checkpoints as model artifacts. The DEV PC needs `wandb login` with the student's key. Never write the key into the repo.
 - `docs/decisions.md` records every design decision, measurement and result explanation; use it as the main source for the report.
 
-## What was verified and what was not
+## What was verified (updated 2026-10-04)
 
-- Verified on the GPU PC:
-  - FastAPI backend (`backend/requirements.txt` pins) with the trained ONNX models, on a real uploaded JPEG.
-  - All endpoints return correct routing, weights and timings; bad file 415, file > 10 MB 413, style 9 422.
-  - Output colours checked visually.
-- **Not verified yet:**
-  - the React frontend against the trained models (only against the smoke backend),
-  - `docker compose up --build` on any machine (Docker was never installed on the GPU PC).
+- FastAPI backend with the trained ONNX models: all endpoints, routing, weights, timings and upload validation
+  (`tests/smoke_app.py`), directly and through a real nginx with the production `frontend/nginx.conf`.
+- React frontend with the trained models in a headless browser (screenshots in `report/figures/app_*.png`, one with an
+  uploaded unseen photo).
+- `docker compose up --build` from a fresh clone on GitHub Actions (`.github/workflows/docker.yml`): build, automatic
+  model download (`backend/app/fetch_models.py`), end-to-end test, restart, test again. Passing.
+- Report: `report/main.tex` compiles with pdfLaTeX in CI (`.github/workflows/report.yml`).
 
-## Remaining work vs the brief (suggested order)
+## Remaining work (only the student can do it)
 
-1. **Docker fresh-clone test.** Clone into a new folder, run `scripts\download_models.ps1`, then `docker compose up --build`, then click through all 4 workspaces at http://localhost:8080. Include the webcam (Face-to-Sketch) and the download button. Fix anything that breaks.
-2. **Google Stitch evidence (student).** The brief requires the interface to be designed first in Google Stitch, with screenshots in the report.
-   - The prompt is in `docs/stitch/stitch_prompt.md`.
-   - Screenshots go in `docs/stitch/`.
-   - Align the frontend to the design if it differs.
-3. **App screenshots** of each workspace for the report.
-4. **Report figures still missing:**
-   - training/validation curves (export from W&B via the API),
-   - architecture diagrams (TikZ or matplotlib),
-   - the app architecture diagram.
-5. **IEEE LaTeX report** in `report/` (IEEEtran).
-   - The brief requires LaTeX; Google Docs is not acceptable for the final report. The student can compile on Overleaf.
-   - Sections are listed in `CLAUDE.md` → Tracking & deliverables.
-   - Related work needs real, checkable citations: DAE, U-Net, pix2pix/PatchGAN, MoE, SSIM, Optuna/TPE, FS2K, Oxford-IIIT Pet.
-   - Interpret every figure and table in the text.
-   - The AI-use appendix comes from `docs/ai_use.md`.
-6. **README.** It is mostly complete; check it against a fresh clone and add the YouTube link at the end.
-7. **Demo video (student), 5–7 min.** Cover startup, upload, runtime corruption, all 4 workspaces, download and the W&B dashboard.
-8. **Viva preparation (student).** The student may be asked to change code live; walk them through the code.
+Everything the code can do is done. **`submission/README.md` is the checklist**: read and edit the report, add name and
+roll number, make the Google Stitch design and screenshots, record the demo video (`submission/demo_video_script.md`;
+GitHub Codespaces works without local Docker), add the YouTube link, compile the final PDF (Overleaf or CI artifact),
+submit on Google Classroom, and prepare for the viva (`submission/viva_notes.md`).
+If the student adds Stitch screenshots to `docs/stitch/`, run `python -m scripts.report_figures` and recompile.
 
 ## Results that need explaining in the report (not bugs)
 

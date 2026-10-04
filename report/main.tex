@@ -231,27 +231,6 @@ this report are rebuilt from the local W\&B run files.
 
 % =====================================================================================================
 \section{Task 1: Universal Denoising Autoencoder}\label{sec:t1}
-\begin{figure*}[t]
-\centering\includegraphics[width=\textwidth]{curves_t1.pdf}
-\caption{Task~1 training loss and validation PSNR per input condition (validation manifest, 736 images).}
-\label{fig:curves-t1}
-\end{figure*}
-
-\begin{figure*}[t]
-\centering\includegraphics[width=\textwidth]{t1_examples.jpg}
-\caption{Task~1: twelve test examples (one per corruption and severity plus three clean images). Columns per example:
-clean target, corrupted input, reconstruction, absolute error map (bright = large error).}\label{fig:t1-examples}
-\end{figure*}
-
-\textbf{Architecture} (Fig.~\ref{fig:arch-ae}). A stem and four stride-2 stages reduce $128\to8$ pixels while
-widening channels to $b\cdot(1,2,4,8)$ with $b=48$; each stage has two $3\times3$ convolutions with batch norm and
-GELU. A $1\times1$ convolution maps to the latent code of $c$ channels at $8\times8$. The decoder mirrors the encoder
-with bilinear upsampling followed by convolutions, which avoids the checkerboard artefacts of transposed
-convolutions~\cite{odena2016}, and ends with a sigmoid. With the selected $c=8$ the code holds 512 values for a
-49,152-value input (96$\times$ compression), so the model cannot copy its input. It has 5.39\,M parameters. The loss
-is $\mathcal{L}=\alpha\,\ell_1+(1-\alpha)(1-\mathrm{SSIM})$ with $\alpha=0.730$ chosen by Optuna (the brief
-suggests 0.8 as a starting point).
-
 \begin{figure}[!htbp]
 \centering
 \begin{tikzpicture}[node distance=1.2mm]
@@ -276,6 +255,50 @@ suggests 0.8 as a starting point).
 the latent code (green) is the only path to the decoder (orange). The dashed limited skip exists only in the
 ablation of Section~\ref{sec:ablation}; the submitted model has no skip.}\label{fig:arch-ae}
 \end{figure}
+
+\begin{figure*}[t]
+\centering\includegraphics[width=\textwidth]{curves_t1.pdf}
+\caption{Task~1 training loss and validation PSNR per input condition (validation manifest, 736 images).}
+\label{fig:curves-t1}
+\end{figure*}
+
+\begin{figure*}[t]
+\centering\includegraphics[width=0.86\textwidth]{t1_examples.jpg}
+\caption{Task~1: twelve test examples (one per corruption and severity plus three clean images). Columns per example:
+clean target, corrupted input, reconstruction, absolute error map (bright = large error).}\label{fig:t1-examples}
+\end{figure*}
+
+\begin{figure}[!htbp]
+\centering\includegraphics[width=\columnwidth]{t1_failures.jpg}
+\caption{Task~1 failure cases (lowest output SSIM, distinct images).}\label{fig:t1-fail}
+\end{figure}
+
+\begin{figure}[!htbp]
+\centering\includegraphics[width=0.8\columnwidth]{ablation_skip.jpg}
+\caption{Ablation on validation images. Columns: corrupted input, selected model (no skip), model with one limited
+skip, clean target. Rows: salt-and-pepper, blur, occlusion, clean.}\label{fig:ablation}
+\end{figure}
+
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=0.49\columnwidth]{optuna_t1_importance.png}\hfill
+\includegraphics[width=0.49\columnwidth]{optuna_t2_cls_importance.png}\\[1mm]
+\includegraphics[width=0.49\columnwidth]{optuna_t2_spec_importance.png}\hfill
+\includegraphics[width=0.49\columnwidth]{optuna_t3_importance.png}\\[1mm]
+\includegraphics[width=0.49\columnwidth]{optuna_t4_importance.png}
+\caption{Optuna hyperparameter importance (fANOVA) of the five studies: Task~1 DAE, classifier, shared specialist
+search, soft MoE and cGAN (left to right, top to bottom). Optimisation histories are in \texttt{results/*/optuna/}.}
+\label{fig:optuna-all}
+\end{figure}
+
+\textbf{Architecture} (Fig.~\ref{fig:arch-ae}). A stem and four stride-2 stages reduce $128\to8$ pixels while
+widening channels to $b\cdot(1,2,4,8)$ with $b=48$; each stage has two $3\times3$ convolutions with batch norm and
+GELU. A $1\times1$ convolution maps to the latent code of $c$ channels at $8\times8$. The decoder mirrors the encoder
+with bilinear upsampling followed by convolutions, which avoids the checkerboard artefacts of transposed
+convolutions~\cite{odena2016}, and ends with a sigmoid. With the selected $c=8$ the code holds 512 values for a
+49,152-value input (96$\times$ compression), so the model cannot copy its input. It has 5.39\,M parameters. The loss
+is $\mathcal{L}=\alpha\,\ell_1+(1-\alpha)(1-\mathrm{SSIM})$ with $\alpha=0.730$ chosen by Optuna (the brief
+suggests 0.8 as a starting point).
 
 \textbf{Training.} The selected configuration was trained for 40 epochs (22\,min). Fig.~\ref{fig:curves-t1} shows a
 smoothly decreasing training loss. Validation PSNR rises for clean, salt-and-pepper and blurred inputs together and
@@ -325,11 +348,44 @@ pattern, because $\ell_1$ and SSIM both reward the conditional mean rather than 
 case is different: the photograph has a genuinely black background, and the model ``fills'' it like an occlusion,
 which produces the bright error region --- the same black-region confusion that misleads the Task~2 classifier.
 
-\begin{figure}[!htbp]
-\centering\includegraphics[width=\columnwidth]{t1_failures.jpg}
-\caption{Task~1 failure cases (lowest output SSIM, distinct images).}\label{fig:t1-fail}
-\end{figure}
+\subsection{Ablations: bottleneck size and one limited skip}\label{sec:ablation}
+To find the cause of the 23\,dB ceiling we retrained Task~1 twice with everything else unchanged
+(Table~\ref{tab:ablation}). Increasing the code from 8 to 64 channels (4,096 values) improves validation PSNR by only
+0.8\,dB. Adding \emph{one} narrow skip --- the $32\times32$ encoder feature squeezed to 8 channels by a $1\times1$
+convolution (8,192 values, still 6$\times$ smaller than the input) and joined to the decoder at the same resolution
+--- raises PSNR by 4.9\,dB and SSIM from 0.64 to 0.84. Blur now ends above its input (28.8\,dB versus about 28\,dB)
+instead of 5\,dB below it. The limit is therefore the $8\times8$ spatial resolution of the code, not its channel
+count, which is consistent with the success of skip connections in restoration networks~\cite{mao2016}. Fig.~\ref{fig:ablation}
+shows much sharper outputs; occlusion holes, however, are only blurred over, and a thin bright border appears on
+salt-and-pepper inputs because noisy edge pixels leak through the skip. The submitted models keep
+\texttt{skip=false} to respect the "genuine bottleneck" requirement without exception; adopting the skip would
+require retraining Tasks~1--3.
 
+\begin{table}[!htbp]
+\centering\caption{Task~1 ablations (validation, last of 40 epochs, PSNR dB)}\label{tab:ablation}
+\scriptsize\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}lcccccc@{}}
+\toprule
+Model & $J$ best & PSNR & SSIM & S\&P & Blur & Occl.\\
+\midrule
+Selected (code 8 ch, no skip) & 0.600 & 22.39 & 0.639 & 22.96 & 23.22 & 20.48\\
+Code 64 ch, no skip & 0.630 & 23.15 & 0.681 & 23.84 & 24.11 & 20.82\\
+Code 8 ch + one limited skip & \textbf{0.763} & \textbf{27.28} & \textbf{0.844} & \textbf{28.89} & \textbf{28.83} & \textbf{22.13}\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Optuna analysis} (Fig.~\ref{fig:optuna-all}, top left). In the 4-epoch trials, dropout explains most of the variance
+of the objective (importance 0.51; any noticeable dropout slows early learning), followed by $\alpha$ (0.29) and the
+learning rate (0.19). Code size, batch size and width had importance below 0.01: within four epochs they made no
+measurable difference, so the study's choice of the smallest code was effectively arbitrary. The 40-epoch ablation
+shows that the code size \emph{does} matter for a full run (+0.8\,dB with 64 channels), i.e.\ short trials hid an
+effect that appears only later in training. A longer trial budget or a multi-fidelity schedule would reduce this
+bias.
+
+% =====================================================================================================
+\clearpage
+\section{Task 2: Classifier and Hard-Routed Specialists}\label{sec:t2}
 \begin{figure*}[t]
 \centering
 \begin{tikzpicture}[node distance=2mm]
@@ -370,66 +426,24 @@ experts; the whole pipeline is differentiable and exported as one ONNX graph tha
 \end{figure*}
 
 \begin{figure*}[t]
-\centering\includegraphics[width=\textwidth]{curves_t2.pdf}
-\caption{Task~2 training curves: classifier accuracy (validation shows one transient dip at epoch 3, early in
-training when the learning rate is at its peak) and validation PSNR of each specialist on its own corruption.}\label{fig:curves-t2}
+\centering\includegraphics[width=\textwidth]{curves_t23.pdf}
+\caption{Training curves of Tasks~2 and~3. (a) Classifier accuracy; validation shows one transient dip at epoch 3,
+early in training when the learning rate is at its peak. (b) Validation PSNR of each specialist on its own corruption.
+(c) MoE validation objective and (d) mean gate weight per branch; shaded epochs are the warm-up (experts frozen). The
+weights stay at $\approx0.25$ each on the balanced validation set: no branch collapses or dies.}\label{fig:curves-t23}
 \end{figure*}
 
-\subsection{Ablations: bottleneck size and one limited skip}\label{sec:ablation}
-To find the cause of the 23\,dB ceiling we retrained Task~1 twice with everything else unchanged
-(Table~\ref{tab:ablation}). Increasing the code from 8 to 64 channels (4,096 values) improves validation PSNR by only
-0.8\,dB. Adding \emph{one} narrow skip --- the $32\times32$ encoder feature squeezed to 8 channels by a $1\times1$
-convolution (8,192 values, still 6$\times$ smaller than the input) and joined to the decoder at the same resolution
---- raises PSNR by 4.9\,dB and SSIM from 0.64 to 0.84. Blur now ends above its input (28.8\,dB versus about 28\,dB)
-instead of 5\,dB below it. The limit is therefore the $8\times8$ spatial resolution of the code, not its channel
-count, which is consistent with the success of skip connections in restoration networks~\cite{mao2016}. Fig.~\ref{fig:ablation}
-shows much sharper outputs; occlusion holes, however, are only blurred over, and a thin bright border appears on
-salt-and-pepper inputs because noisy edge pixels leak through the skip. The submitted models keep
-\texttt{skip=false} to respect the "genuine bottleneck" requirement without exception; adopting the skip would
-require retraining Tasks~1--3.
-
-\begin{table}[!htbp]
-\centering\caption{Task~1 ablations (validation, last of 40 epochs, PSNR dB)}\label{tab:ablation}
-\scriptsize\setlength{\tabcolsep}{3pt}
-\begin{tabular}{@{}lcccccc@{}}
-\toprule
-Model & $J$ best & PSNR & SSIM & S\&P & Blur & Occl.\\
-\midrule
-Selected (code 8 ch, no skip) & 0.600 & 22.39 & 0.639 & 22.96 & 23.22 & 20.48\\
-Code 64 ch, no skip & 0.630 & 23.15 & 0.681 & 23.84 & 24.11 & 20.82\\
-Code 8 ch + one limited skip & \textbf{0.763} & \textbf{27.28} & \textbf{0.844} & \textbf{28.89} & \textbf{28.83} & \textbf{22.13}\\
-\bottomrule
-\end{tabular}
-\end{table}
-
 \begin{figure}[!htbp]
-\centering\includegraphics[width=0.8\columnwidth]{ablation_skip.jpg}
-\caption{Ablation on validation images. Columns: corrupted input, selected model (no skip), model with one limited
-skip, clean target. Rows: salt-and-pepper, blur, occlusion, clean.}\label{fig:ablation}
+\centering\includegraphics[width=0.62\columnwidth]{t2_confusion.png}
+\caption{Normalised confusion matrix of the corruption classifier (rows: true class).}\label{fig:confusion}
 \end{figure}
 
-\textbf{Optuna analysis} (Fig.~\ref{fig:optuna-all}, top left). In the 4-epoch trials, dropout explains most of the variance
-of the objective (importance 0.51; any noticeable dropout slows early learning), followed by $\alpha$ (0.29) and the
-learning rate (0.19). Code size, batch size and width had importance below 0.01: within four epochs they made no
-measurable difference, so the study's choice of the smallest code was effectively arbitrary. The 40-epoch ablation
-shows that the code size \emph{does} matter for a full run (+0.8\,dB with 64 channels), i.e.\ short trials hid an
-effect that appears only later in training. A longer trial budget or a multi-fidelity schedule would reduce this
-bias.
-
 \begin{figure}[!htbp]
-\centering
-\includegraphics[width=0.49\columnwidth]{optuna_t1_importance.png}\hfill
-\includegraphics[width=0.49\columnwidth]{optuna_t2_cls_importance.png}\\[1mm]
-\includegraphics[width=0.49\columnwidth]{optuna_t2_spec_importance.png}\hfill
-\includegraphics[width=0.49\columnwidth]{optuna_t3_importance.png}\\[1mm]
-\includegraphics[width=0.49\columnwidth]{optuna_t4_importance.png}
-\caption{Optuna hyperparameter importance (fANOVA) of the five studies: Task~1 DAE, classifier, shared specialist
-search, soft MoE and cGAN (left to right, top to bottom). Optimisation histories are in \texttt{results/*/optuna/}.}
-\label{fig:optuna-all}
+\centering\includegraphics[width=\columnwidth]{t2_misrouting.jpg}
+\caption{Task~2 failures caused by classifier errors: clean images with real black borders are classified as
+occluded (``pred'') and blurred by the occlusion expert.}\label{fig:misroute}
 \end{figure}
 
-% =====================================================================================================
-\section{Task 2: Classifier and Hard-Routed Specialists}\label{sec:t2}
 \textbf{Classifier.} Four convolutional stages (32--256 channels, two $3\times3$ conv + BN + ReLU each, then
 $2\times2$ max pooling), global average pooling, dropout and a linear layer (1.17\,M parameters) predict
 $p=[p_\text{clean},p_\text{salt},p_\text{blur},p_\text{occ}]$. It is trained with cross-entropy on balanced batches
@@ -444,7 +458,7 @@ identity bypass and are never processed by an expert (Fig.~\ref{fig:arch-route}a
 \textbf{Classifier results.} The test accuracy is 99.59\% with macro precision / recall / F1 of 0.991 / 0.995 /
 0.993 (Table~\ref{tab:cls}, Fig.~\ref{fig:confusion}). Salt-and-pepper and blur are recognised perfectly. The only
 systematic confusion is between \emph{clean} and \emph{occlusion}: 117 low-severity occlusions are called clean and
-30 clean images are called blur (23) or occlusion (7). Fig.~\ref{fig:curves-t2} shows that validation accuracy
+30 clean images are called blur (23) or occlusion (7). Fig.~\ref{fig:curves-t23}a shows that validation accuracy
 reaches 99\% within six epochs.
 
 \begin{table}[!htbp]
@@ -463,25 +477,6 @@ Macro average & 0.991 & 0.995 & 0.993 & accuracy 0.996\\
 \bottomrule
 \end{tabular}
 \end{table}
-
-\begin{figure}[!htbp]
-\centering\includegraphics[width=0.62\columnwidth]{t2_confusion.png}
-\caption{Normalised confusion matrix of the corruption classifier (rows: true class).}\label{fig:confusion}
-\end{figure}
-
-\begin{figure*}[t]
-\centering\includegraphics[width=\textwidth]{curves_t3.pdf}
-\caption{Task~3 validation objective and mean gate weight per branch. The shaded epochs are the warm-up (experts
-frozen). The weights stay at $\approx0.25$ each on the balanced validation set: no branch collapses or dies.}
-\label{fig:curves-t3}
-\end{figure*}
-
-\begin{figure*}[t]
-\centering\includegraphics[width=\textwidth]{t3_dominant.jpg}
-\caption{Task~3: dominant routing (left column: one expert receives weight 1.00) versus distributed routing (right
-column: weights spread over several branches, shown above each output as clean/salt/blur/occlusion).}
-\label{fig:dominant}
-\end{figure*}
 
 \textbf{Oracle versus predicted routing.} Table~\ref{tab:compare} compares all restoration systems per condition. Oracle and
 predicted routing are almost identical (they differ only for the 0.8\% of clean images and 3.2\% of low occlusions that
@@ -515,16 +510,22 @@ Conversely, small low-severity masks that hide little structure are called clean
 come from the definition of the corruption rather than from under-training; a remedy is to add letterboxed clean
 images to training or to let a soft gate hedge between branches, which Task~3 does.
 
+% =====================================================================================================
+\clearpage
+\section{Task 3: Soft Mixture of Experts}\label{sec:t3}
 \begin{figure}[!htbp]
-\centering\includegraphics[width=\columnwidth]{t2_misrouting.jpg}
-\caption{Task~2 failures caused by classifier errors: clean images with real black borders are classified as
-occluded (``pred'') and blurred by the occlusion expert.}\label{fig:misroute}
+\centering\includegraphics[width=0.78\columnwidth]{t3_heatmap.png}
+\caption{Task~3 routing heatmap: mean gate weight per branch for every true corruption and severity (test set).}
+\label{fig:heatmap}
 \end{figure}
 
+\begin{figure*}[t]
+\centering\includegraphics[width=\textwidth]{t3_dominant.jpg}
+\caption{Task~3: dominant routing (left column: one expert receives weight 1.00) versus distributed routing (right
+column: weights spread over several branches, shown above each output as clean/salt/blur/occlusion).}
+\label{fig:dominant}
+\end{figure*}
 
-
-% =====================================================================================================
-\section{Task 3: Soft Mixture of Experts}\label{sec:t3}
 \textbf{Model.} The gate $G$ is a copy of the Task~2 classifier and the experts are copies of the three specialists,
 plus an identity branch (Fig.~\ref{fig:arch-route}b): $w=\mathrm{softmax}(G(\tilde{x})/\tau)$ and
 $\hat{x}=w_0\tilde{x}+w_1A_\text{salt}(\tilde{x})+w_2A_\text{blur}(\tilde{x})+w_3A_\text{occ}(\tilde{x})$
@@ -539,25 +540,13 @@ losses of sparse MoEs~\cite{shazeer2017,fedus2022}; because every batch contains
 condition, its optimum coincides with correct routing, so it penalises collapse without fighting the CE term. Optuna
 trials whose largest mean branch weight exceeded 0.9 on validation were treated as routing collapse and pruned.
 
-\textbf{Training behaviour} (Fig.~\ref{fig:curves-t3}). The validation objective rises during warm-up
+\textbf{Training behaviour} (Fig.~\ref{fig:curves-t23}c,d). The validation objective rises during warm-up
 ($0.832\to0.856\to0.863$) and then stays flat between 0.860 and 0.862 for all 12 joint epochs. The checkpoint with the
 best validation objective is therefore the \emph{end of warm-up}; in the delivered MoE the experts equal the Task~2
 specialists and only the gate was trained. We kept this selection rule rather than overriding it, and also release the
 final joint checkpoint. Joint fine-tuning cannot help much here: the experts are capped by their bottleneck
 (Section~\ref{sec:ablation}) and a quarter of the objective comes from clean images, where the identity branch
 already reaches the 40\,dB cap in~(\ref{eq:obj}).
-
-\begin{figure*}[t]
-\centering\includegraphics[width=\textwidth]{curves_t4.pdf}
-\caption{Task~4 losses logged separately: discriminator real/fake and generator adversarial losses, generator $\ell_1$
-on training versus validation, and validation SSIM per style.}\label{fig:curves-t4}
-\end{figure*}
-
-\begin{figure*}[t]
-\centering\includegraphics[width=\textwidth]{t4_examples.jpg}
-\caption{Task~4 test examples, two per style (rows: style 1, 2, 3). Columns per example: photo, real sketch,
-generated sketch in the true style, and the same photo generated in another style.}\label{fig:t4-examples}
-\end{figure*}
 
 \textbf{Routing analysis.} The gate assigns 99.3\% of test images to the correct branch. Fig.~\ref{fig:heatmap}
 reports the mean weights for every true condition and severity: salt-and-pepper and blur receive a weight of 1.00 on
@@ -566,12 +555,6 @@ cell with a noticeable split (0.93 occlusion expert, 0.07 identity), the same am
 The share of images whose largest weight goes to each branch is 0.104 / 0.300 / 0.301 / 0.295 (identity / salt /
 blur / occlusion), close to the manifest proportions 0.1 / 0.3 / 0.3 / 0.3, so no expert is inactive and none
 dominates unrelated inputs.
-
-\begin{figure}[!htbp]
-\centering\includegraphics[width=0.78\columnwidth]{t3_heatmap.png}
-\caption{Task~3 routing heatmap: mean gate weight per branch for every true corruption and severity (test set).}
-\label{fig:heatmap}
-\end{figure}
 
 Fig.~\ref{fig:dominant} contrasts dominant and distributed routing. The three lowest-entropy cases are
 salt-and-pepper images routed with weight 1.00. The three highest-entropy cases are low-severity occlusions, e.g.\
@@ -584,18 +567,6 @@ expert.
 
 % =====================================================================================================
 \section{Task 4: Style-Conditioned Face-to-Sketch cGAN}\label{sec:t4}
-\textbf{Architecture} (Fig.~\ref{fig:arch-gan}). The generator is a pix2pix U-Net~\cite{isola2017,ronneberger2015}
-with seven stride-2 downsamplings ($128\to1$), instance normalisation~\cite{ulyanov2016}, dropout in the three
-innermost decoder blocks and skip connections at every scale (42.1\,M parameters; skips are allowed here because
-the input and output share structure). The style $s\in\{1,2,3\}$ is a learned \texttt{nn.Embedding}$(3,32)$ that is
-injected twice into the generator --- tiled as 32 extra input channels and concatenated again at the $1\times1$
-bottleneck --- and once into the discriminator. The discriminator is a PatchGAN (2.8\,M parameters) on the
-concatenation of photo, sketch and tiled style embedding, producing $14\times14$ real/fake logits, i.e.\ it judges
-whether each local patch is a plausible sketch \emph{of that style} for \emph{that photo}. Losses use binary
-cross-entropy with logits: $\mathcal{L}_D=\mathrm{BCE}(D(x,y,s),1)+\mathrm{BCE}(D(x,G(x,s),s),0)$ and
-$\mathcal{L}_G=\mathrm{BCE}(D(x,G(x,s),s),1)+\lambda_{L1}\,\lVert y-G(x,s)\rVert_1$ with $\lambda_{L1}=168.6$
-selected by Optuna (pix2pix uses 100).
-
 \begin{figure}[!htbp]
 \centering
 \begin{tikzpicture}[node distance=1.4mm]
@@ -617,39 +588,53 @@ selected by Optuna (pix2pix uses 100).
 and the discriminator receives photo, (real or generated) sketch and the tiled embedding.}\label{fig:arch-gan}
 \end{figure}
 
+\begin{figure*}[t]
+\centering\includegraphics[width=\textwidth]{curves_t4.pdf}
+\caption{Task~4 losses logged separately: discriminator real/fake and generator adversarial losses, generator $\ell_1$
+on training versus validation, and validation SSIM per style.}\label{fig:curves-t4}
+\end{figure*}
+
+\begin{figure*}[t]
+\centering\includegraphics[width=\textwidth]{t4_examples.jpg}
+\caption{Task~4 test examples, two per style (rows: style 1, 2, 3). Columns per example: photo, real sketch,
+generated sketch in the true style, and the same photo generated in another style.}\label{fig:t4-examples}
+\end{figure*}
+
+\begin{figure}[!htbp]
+\centering\includegraphics[width=\columnwidth]{t4_progress.jpg}
+\caption{Task~4 generator development on fixed validation photographs (logged every 5 epochs; the selected
+checkpoint is epoch 47).}\label{fig:t4-progress}
+\end{figure}
+
+\begin{figure}[!htbp]
+\centering\includegraphics[width=\columnwidth]{t4_failures.jpg}
+\caption{Task~4 failure cases (lowest SSIM): style-2 hatching on long hair.}\label{fig:t4-fail}
+\end{figure}
+
+\textbf{Architecture} (Fig.~\ref{fig:arch-gan}). The generator is a pix2pix U-Net~\cite{isola2017,ronneberger2015}
+with seven stride-2 downsamplings ($128\to1$), instance normalisation~\cite{ulyanov2016}, dropout in the three
+innermost decoder blocks and skip connections at every scale (42.1\,M parameters; skips are allowed here because
+the input and output share structure). The style $s\in\{1,2,3\}$ is a learned \texttt{nn.Embedding}$(3,32)$ that is
+injected twice into the generator --- tiled as 32 extra input channels and concatenated again at the $1\times1$
+bottleneck --- and once into the discriminator. The discriminator is a PatchGAN (2.8\,M parameters) on the
+concatenation of photo, sketch and tiled style embedding, producing $14\times14$ real/fake logits, i.e.\ it judges
+whether each local patch is a plausible sketch \emph{of that style} for \emph{that photo}. Losses use binary
+cross-entropy with logits: $\mathcal{L}_D=\mathrm{BCE}(D(x,y,s),1)+\mathrm{BCE}(D(x,G(x,s),s),0)$ and
+$\mathcal{L}_G=\mathrm{BCE}(D(x,G(x,s),s),1)+\lambda_{L1}\,\lVert y-G(x,s)\rVert_1$ with $\lambda_{L1}=168.6$
+selected by Optuna (pix2pix uses 100).
+
 \textbf{Training} (Fig.~\ref{fig:curves-t4}). The selected configuration (batch 8) was trained for 150 epochs
 (33\,min). The discriminator losses stay around 0.3--0.4 and decrease slowly as the learning rate decays, while the
 generator's adversarial loss stays around 2.3--2.5: neither network wins, so training is stable. The training $\ell_1$
 keeps falling, but the validation $\ell_1$ is flat after about 20 epochs and the best validation score occurs at
 epoch 47; afterwards the generator mainly fits training-set stroke detail, which is expected with 899 training pairs.
-The checkpoint selected on validation is therefore from epoch 47.
-
-\begin{figure*}[t]
-\centering
-\IfFileExists{figures/stitch_01_universal.png}{%
-\includegraphics[width=0.245\textwidth]{stitch_01_universal.png}\hfill
-\includegraphics[width=0.245\textwidth]{stitch_02_hard.png}\hfill
-\includegraphics[width=0.245\textwidth]{stitch_03_moe.png}\hfill
-\includegraphics[width=0.245\textwidth]{stitch_04_sketch.png}}{%
-\fbox{\parbox{0.9\textwidth}{\centering\vspace{8mm}\TODO{Google Stitch design screenshots: save them as
-docs/stitch/01\_universal.png, 02\_hard.png, 03\_moe.png, 04\_sketch.png and run
-python -m scripts.report\_figures}\vspace{8mm}}}}
-\caption{Original Google Stitch design of the four workspaces (evidence of the design step).}\label{fig:stitch}
-\end{figure*}
-
-\begin{figure*}[t]
-\centering
-\includegraphics[width=0.495\textwidth]{app_universal.png}\hfill
-\includegraphics[width=0.495\textwidth]{app_hard.png}\\[1mm]
-\includegraphics[width=0.495\textwidth]{app_moe.png}\hfill
-\includegraphics[width=0.495\textwidth]{app_sketch.png}
-\caption{The deployed application with the trained models. Top left: Universal Restoration (salt-and-pepper applied at
-runtime, input / output / error map, corruption settings, inference time, download). Top right: Hard-Routed Restoration
-of an \emph{uploaded} photograph that is not part of the dataset samples (classifier probabilities, predicted
-corruption, selected expert). Bottom left: Soft Mixture-of-Experts Restoration (all four routing weights, expert-mix bar,
-top contributor). Bottom right: Face-to-Sketch Generator (style selection, side-by-side result, download; webcam capture
-is available through the ``Use webcam'' button).}\label{fig:screens}
-\end{figure*}
+The checkpoint selected on validation is therefore from epoch 47. Fig.~\ref{fig:t4-progress} follows three fixed validation photographs
+through training: at epoch~5 the generator produces noisy, blotchy outlines; by epoch~20 the face contours and hair
+masses are in place; around the selected epoch the strokes become clean and style-consistent. The final epoch draws
+visibly sharper, more detailed strokes, yet its validation $\ell_1$ and SSIM are no better: the extra detail is not
+where the artist put it, which is why the validation-based selection prefers epoch 47. Choosing the final model by a
+pixel metric therefore trades some perceived sharpness for alignment, a known limitation of $\ell_1$/SSIM for
+sketches.
 
 \textbf{Results.} On the 1,046 official test pairs the generator reaches $\ell_1=0.103$ and SSIM 0.481
 (Table~\ref{tab:t4}). Styles 1 and 3, which are line drawings and soft shaded sketches with large white areas, are
@@ -681,13 +666,6 @@ the per-style numbers: the official test annotation labels 179 sketches from the
 although the sketches we inspected resemble the pencil style labelled style~3 elsewhere. We kept the official labels
 as required, and note that per-style test numbers may be slightly mixed.
 
-\begin{figure}[!htbp]
-\centering\includegraphics[width=\columnwidth]{t4_failures.jpg}
-\caption{Task~4 failure cases (lowest SSIM): style-2 hatching on long hair.}\label{fig:t4-fail}
-\end{figure}
-
-
-
 \textbf{Optuna across tasks} (Fig.~\ref{fig:optuna-all}). For the classifier, dropout (0.43), learning rate (0.33)
 and weight decay (0.23) explain almost all variance, while the channel configuration and batch size do not matter in
 short trials. The specialist search repeats the Task~1 pattern (dropout, $\alpha$, learning rate). For the MoE the
@@ -700,21 +678,32 @@ and batch size had little effect in 10-epoch trials, and the search moved $\lamb
 
 % =====================================================================================================
 \section{Application and Deployment}\label{sec:app}
-\textbf{Design.} The interface was specified in Google Stitch (prompt in \texttt{docs/stitch/stitch\_prompt.md}):
-one page with a status pill, four tabs named exactly as in the brief, an input card on the left and image panels,
-statistics and task-specific cards on the right (Fig.~\ref{fig:stitch}). It was implemented in React with Tailwind
-CSS (Fig.~\ref{fig:screens}).
+\begin{figure*}[t]
+\centering
+\IfFileExists{figures/stitch_01_universal.png}{%
+\includegraphics[width=0.245\textwidth]{stitch_01_universal.png}\hfill
+\includegraphics[width=0.245\textwidth]{stitch_02_hard.png}\hfill
+\includegraphics[width=0.245\textwidth]{stitch_03_moe.png}\hfill
+\includegraphics[width=0.245\textwidth]{stitch_04_sketch.png}}{%
+\fbox{\parbox{0.9\textwidth}{\centering\vspace{8mm}\TODO{Google Stitch design screenshots: save them as
+docs/stitch/01\_universal.png, 02\_hard.png, 03\_moe.png, 04\_sketch.png and run
+python -m scripts.report\_figures}\vspace{8mm}}}}
+\caption{Original Google Stitch design of the four workspaces (evidence of the design step).}\label{fig:stitch}
+\end{figure*}
 
-\textbf{Architecture} (Fig.~\ref{fig:arch-app}). Docker Compose starts two containers. The \emph{frontend} container
-builds the React app with Node~22 and serves it with nginx, which also proxies \texttt{/api/} to the backend. The
-\emph{backend} container runs FastAPI with ONNX Runtime on the CPU. Its endpoints are \texttt{GET /health},
-\texttt{/samples}, \texttt{/corruptions}, and \texttt{POST /corrupt}, \texttt{/restore/universal},
-\texttt{/restore/hard}, \texttt{/restore/moe} and \texttt{/sketch}. Uploads are validated (image MIME type, decodable,
-at most 10\,MB; errors 415/413/422), converted to RGB and resized to $128\times128$ exactly as in training; runtime
-corruption calls the same module used for training. Responses contain the images (base64 PNG), inference time, the
-classifier probabilities, predicted class and selected expert (Task~2) or the four MoE weights with their ranking
-(Task~3). ONNX sessions are created lazily, and a missing model returns HTTP 503 with an explanation instead of
-crashing.
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.42\textwidth]{app_universal.png}\hspace{2mm}
+\includegraphics[width=0.42\textwidth]{app_hard.png}\\[1mm]
+\includegraphics[width=0.42\textwidth]{app_moe.png}\hspace{2mm}
+\includegraphics[width=0.42\textwidth]{app_sketch.png}
+\caption{The deployed application with the trained models. Top left: Universal Restoration (salt-and-pepper applied at
+runtime, input / output / error map, corruption settings, inference time, download). Top right: Hard-Routed Restoration
+of an \emph{uploaded} photograph that is not part of the dataset samples (classifier probabilities, predicted
+corruption, selected expert). Bottom left: Soft Mixture-of-Experts Restoration (all four routing weights, expert-mix bar,
+top contributor). Bottom right: Face-to-Sketch Generator (style selection, side-by-side result, download; webcam capture
+is available through the ``Use webcam'' button).}\label{fig:screens}
+\end{figure*}
 
 \begin{figure}[!htbp]
 \centering
@@ -732,6 +721,22 @@ crashing.
 \caption{Deployment: one \texttt{docker compose up -{}-build} starts both containers; the backend downloads and verifies
 the models on its first start.}\label{fig:arch-app}
 \end{figure}
+
+\textbf{Design.} The interface was specified in Google Stitch (prompt in \texttt{docs/stitch/stitch\_prompt.md}):
+one page with a status pill, four tabs named exactly as in the brief, an input card on the left and image panels,
+statistics and task-specific cards on the right (Fig.~\ref{fig:stitch}). It was implemented in React with Tailwind
+CSS (Fig.~\ref{fig:screens}).
+
+\textbf{Architecture} (Fig.~\ref{fig:arch-app}). Docker Compose starts two containers. The \emph{frontend} container
+builds the React app with Node~22 and serves it with nginx, which also proxies \texttt{/api/} to the backend. The
+\emph{backend} container runs FastAPI with ONNX Runtime on the CPU. Its endpoints are \texttt{GET /health},
+\texttt{/samples}, \texttt{/corruptions}, and \texttt{POST /corrupt}, \texttt{/restore/universal},
+\texttt{/restore/hard}, \texttt{/restore/moe} and \texttt{/sketch}. Uploads are validated (image MIME type, decodable,
+at most 10\,MB; errors 415/413/422), converted to RGB and resized to $128\times128$ exactly as in training; runtime
+corruption calls the same module used for training. Responses contain the images (base64 PNG), inference time, the
+classifier probabilities, predicted class and selected expert (Task~2) or the four MoE weights with their ranking
+(Task~3). ONNX sessions are created lazily, and a missing model returns HTTP 503 with an explanation instead of
+crashing.
 
 \textbf{One-command start.} The evaluator runs \texttt{git clone}, then \texttt{docker compose up -{}-build}, and opens
 \url{http://localhost:8080}. On its first start the backend downloads the seven ONNX files (330\,MB) from the GitHub
@@ -763,6 +768,7 @@ T4 generator & 42.12\,M & 160.7 & $6.6\times10^{-6}$\\
 \end{table}
 
 % =====================================================================================================
+\clearpage
 \section{Limitations}\label{sec:limits}
 (1)~The restoration models are limited by the 512-value spatial bottleneck: they improve heavily corrupted inputs but
 degrade mild blur and clean images, and specialists do not outperform the universal model. The limited-skip ablation

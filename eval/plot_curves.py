@@ -1,6 +1,6 @@
 """Training / validation curves for the report, from results/curves_history.json (scripts/export_wandb_history.py).
 
-    python -m eval.plot_curves        # -> report/figures/curves_t{1,2,3,4}.pdf
+    python -m eval.plot_curves        # -> report/figures/curves_t1.pdf, curves_t23.pdf, curves_t4.pdf
 
 One quantity per axis (no dual axes). Series keep a fixed colour per condition across all figures and also differ
 in dash style, so the curves stay readable in greyscale print.
@@ -62,33 +62,28 @@ def main():
     legend_below(b, 4)
     save(fig, "curves_t1.pdf")
 
-    # ---- Task 2: classifier accuracy | specialist validation PSNR
-    fig, (a, b) = plt.subplots(1, 2, figsize=(7.0, 2.2), layout="constrained")
-    line(a, h["t2_cls"], "train/acc", "train accuracy", COLOR["clean"])
-    line(a, h["t2_cls"], "val/acc", "validation accuracy", COLOR["salt_pepper"], "--")
-    a.set(title="(a) T2 corruption classifier", xlabel="epoch", ylabel="accuracy")
+    # ---- Tasks 2 and 3 in one row: classifier accuracy | specialist PSNR | MoE objective | MoE mean weights
+    fig, (a, b, c, d) = plt.subplots(1, 4, figsize=(7.0, 2.3), layout="constrained")
+    line(a, h["t2_cls"], "train/acc", "train", COLOR["clean"])
+    line(a, h["t2_cls"], "val/acc", "validation", COLOR["salt_pepper"], "--")
+    a.set(title="(a) T2 classifier accuracy", xlabel="epoch", ylabel="accuracy")
     a.legend(loc="lower right")
-    for c in ["salt_pepper", "blur", "occlusion"]:
-        line(b, h[f"t2_spec_{c}"], "val/psnr", f"{NAME[c]} specialist", COLOR[c], DASH[c])
-    b.set(title="(b) T2 specialists, validation PSNR on own corruption", xlabel="epoch", ylabel="PSNR (dB)")
+    for cond in ["salt_pepper", "blur", "occlusion"]:
+        line(b, h[f"t2_spec_{cond}"], "val/psnr", NAME[cond], COLOR[cond], DASH[cond])
+    b.set(title="(b) T2 specialists, val. PSNR", xlabel="epoch", ylabel="PSNR (dB)")
     b.legend(loc="lower right")
-    save(fig, "curves_t2.pdf")
-
-    # ---- Task 3: validation objective | mean routing weight per branch (warm-up shaded)
-    fig, (a, b) = plt.subplots(1, 2, figsize=(7.0, 2.2), layout="constrained")
-    for ax in (a, b):
+    for ax in (c, d):
         ax.axvspan(-0.5, 2.5, color="#f1f1f1", zorder=0, lw=0)
-        ax.text(1, 0.02, "warm-up\n(gate only)", transform=ax.get_xaxis_transform(), ha="center", va="bottom",
+        ax.text(1, 0.02, "warm-up", transform=ax.get_xaxis_transform(), ha="center", va="bottom",
                 fontsize=6, color="#666666")
-    line(a, h["t3"], "val/score", "objective", COLOR["clean"])
-    a.set(title="(a) T3 validation objective", xlabel="epoch", ylabel="objective")
-    for c in COLOR:
-        line(b, h["t3"], f"val/mean_w_{c}", "identity" if c == "clean" else f"{NAME[c]} expert", COLOR[c], DASH[c])
-    b.axhline(0.25, color="#999999", lw=0.8)
-    b.set(title="(b) T3 mean gate weight per branch (validation)", xlabel="epoch", ylabel="mean weight",
-          ylim=(0, 0.45))
-    legend_below(b, 4)
-    save(fig, "curves_t3.pdf")
+    line(c, h["t3"], "val/score", "objective", COLOR["clean"])
+    c.set(title="(c) T3 validation objective", xlabel="epoch", ylabel="objective")
+    for cond in COLOR:
+        line(d, h["t3"], f"val/mean_w_{cond}", "identity" if cond == "clean" else NAME[cond], COLOR[cond], DASH[cond])
+    d.axhline(0.25, color="#999999", lw=0.8)
+    d.set(title="(d) T3 mean gate weight", xlabel="epoch", ylabel="mean weight", ylim=(0, 0.45))
+    legend_below(d, 2)
+    save(fig, "curves_t23.pdf")
 
     # ---- Task 4: adversarial losses | L1 (train vs val) | validation SSIM per style
     fig, (a, b, c) = plt.subplots(1, 3, figsize=(7.0, 2.2), layout="constrained")

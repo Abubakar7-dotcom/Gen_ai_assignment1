@@ -22,8 +22,8 @@ COPY = {  # report name <- results path
     "t2_misrouting.jpg": "t2/misrouting_failures.png",
     "t3_heatmap.png": "t3/routing_heatmap.png",
     "t4_failures.jpg": "t4/failures.png",
+    "t4_progress.jpg": "t4/progress.png",
     "ablation_skip.jpg": "ablations/t1_skip_examples.png",
-    "optuna_t1_history.png": "t1/optuna/history.png",
     **{f"optuna_{t}_importance.png": f"{t}/optuna/importance.png" for t in ["t1", "t2_cls", "t2_spec", "t3", "t4"]},
 }
 RETILE = {"t1_examples.jpg": "t1/examples.png",
@@ -65,8 +65,36 @@ def retile(src, dst, cols=2, keep=None):
     print(f"{dst.name}: {len(row_bands(img))} rows -> {cols} columns")
 
 
+def t4_progress(epochs=(5, 20, 45, 149), photos=(0, 3, 5), tile=128):
+    """results/t4/progress.png from the fixed-validation sample grids saved during T4 training
+    (checkpoints/t4/samples/epoch_XXX.png: rows photo | real | generated | as style 1 | 2 | 3, one column per photo).
+    Only on the training machine (checkpoints are not in git); the PNG itself is committed."""
+    src = ROOT / "checkpoints" / "t4" / "samples"
+    if not src.exists():
+        return
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    grids = {e: np.asarray(Image.open(src / f"epoch_{e:03d}.png").convert("RGB")) for e in epochs}
+    crop = lambda g, r, c: g[r * tile:(r + 1) * tile, c * tile:(c + 1) * tile]
+    cols = ["photo", "real sketch"] + [f"epoch {e}" for e in epochs]
+    fig, axes = plt.subplots(len(photos), len(cols), figsize=(1.15 * len(cols), 1.2 * len(photos)))
+    for i, c in enumerate(photos):
+        g0 = grids[epochs[0]]
+        panels = [crop(g0, 0, c), crop(g0, 1, c)] + [crop(grids[e], 2, c) for e in epochs]
+        for j, img in enumerate(panels):
+            axes[i, j].imshow(img); axes[i, j].axis("off")
+            if i == 0:
+                axes[i, j].set_title(cols[j], fontsize=8)
+    fig.tight_layout(pad=0.3)
+    fig.savefig(RES / "t4" / "progress.png", dpi=150)
+    plt.close(fig)
+    print("results/t4/progress.png")
+
+
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
+    t4_progress()
     for name, rel in COPY.items():
         save(Image.open(RES / rel), OUT / name)
     for s in STITCH:

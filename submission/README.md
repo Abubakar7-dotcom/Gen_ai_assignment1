@@ -20,7 +20,7 @@ Done and verified:
 * Application (React + Tailwind + FastAPI) with the four workspaces; tested end to end with the trained models.
 * Docker: `git clone` → `docker compose up --build` → http://localhost:8080. The backend downloads the models by itself.
   Tested automatically on a clean Linux machine (GitHub Actions, workflow `docker-compose-e2e`).
-* Report: complete draft, 14 pages, every figure and table interpreted, built with pdfLaTeX in CI (workflow `report-pdf`).
+* Report: complete draft, 15 pages, every figure and table interpreted, built with pdfLaTeX in CI (workflow `report-pdf`).
 
 ## What only you can do (in this order)
 
@@ -32,7 +32,7 @@ Done and verified:
    * Screenshot each of the four screens and save them as `docs/stitch/01_universal.png`, `02_hard.png`,
      `03_moe.png`, `04_sketch.png`.
    * Run `python -m scripts.report_figures` (copies them into `report/figures/`). The report then shows them
-     automatically in Fig. 18 instead of the red box. (On Overleaf: upload them to `figures/` as
+     automatically in Fig. 19 instead of the red box. (On Overleaf: upload them to `figures/` as
      `stitch_01_universal.png`, `stitch_02_hard.png`, `stitch_03_moe.png`, `stitch_04_sketch.png`.)
 4. **Demo video** (5–7 min): follow `demo_video_script.md`, upload to YouTube (Unlisted is fine), then put the link in
    `report/main.tex` line 23: replace `\TODO{YouTube link of the demo video}` with `\url{https://youtu.be/...}`.
