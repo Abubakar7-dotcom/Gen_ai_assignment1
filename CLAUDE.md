@@ -195,7 +195,8 @@ Test severities (each test image × each corruption × 3 levels, plus clean):
 - Check with `nvidia-smi`. **If it shows the RTX 4050, you are on the GPU PC: follow `docs/gpu_runbook.md` stage by stage.**
 - Otherwise you are on the DEV PC (no GPU): app, Docker, report; never start real training here.
 - All training is done (GPU PC, 2026-10-03); checkpoints and ONNX files are in the
-  release `models-v1`. `docker compose up` has never run on a real machine.
+  release `models-v1`. `docker compose up --build` verified on the DEV PC (Docker Desktop 4.94, 2026-10-07):
+  `tests/smoke_app.py http://localhost:8080` passes all checks. Docker Desktop AutoStart is off: start it before the demo.
 - **On the DEV PC, read `docs/handoff_devpc.md` first**: current results, what is verified, remaining work
   in order, open decisions for the student.
 
